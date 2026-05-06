@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { BookOpen, FolderGit2, FolderKanban, LayoutGrid } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -23,11 +23,20 @@ export function AppSidebar() {
         ? dashboard(page.props.currentTeam.slug)
         : '/';
 
+    const projectsUrl = page.props.currentTeam
+        ? `/${(page.props.currentTeam as { slug: string }).slug}/projects`
+        : '/';
+
     const mainNavItems: NavItem[] = [
         {
             title: 'Dashboard',
             href: dashboardUrl,
             icon: LayoutGrid,
+        },
+        {
+            title: 'Projects',
+            href: projectsUrl,
+            icon: FolderKanban,
         },
     ];
 

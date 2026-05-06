@@ -82,6 +82,16 @@ class Team extends Model
     }
 
     /**
+     * Get all projects for this team.
+     *
+     * @return HasMany<\App\Models\Project, $this>
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(\App\Models\Project::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
