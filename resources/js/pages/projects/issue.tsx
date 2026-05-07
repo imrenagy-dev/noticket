@@ -31,7 +31,9 @@ const STATUS_COLORS: Record<string, string> = {
     done: 'bg-green-500/15 text-green-700 dark:text-green-400',
 };
 
-function EditableText({ value, onSave, multiline = false }: { value: string; onSave: (v: string) => void; multiline?: boolean }) {
+function EditableText({ value, onSave, multiline = false }: {
+    value: string; onSave: (v: string) => void; multiline?: boolean;
+}) {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(value);
 
@@ -76,7 +78,9 @@ function EditableText({ value, onSave, multiline = false }: { value: string; onS
     );
 }
 
-function CommentItem({ comment, currentUserId, issueUrl }: { comment: Comment; currentUserId: number; issueUrl: string }) {
+function CommentItem({ comment, currentUserId, issueUrl }: {
+    comment: Comment; currentUserId: number; issueUrl: string;
+}) {
     const [editing, setEditing] = useState(false);
     const { data, setData, patch, processing } = useForm({ content: comment.content });
 
@@ -92,8 +96,8 @@ function CommentItem({ comment, currentUserId, issueUrl }: { comment: Comment; c
             <div className="flex size-8 flex-none items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                 {comment.user.name.slice(0, 2).toUpperCase()}
             </div>
-            <div className="flex-1">
-                <div className="mb-1 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium">{comment.user.name}</span>
                     <span className="text-xs text-muted-foreground">
                         {new Date(comment.created_at).toLocaleString()}
@@ -131,7 +135,10 @@ function CommentItem({ comment, currentUserId, issueUrl }: { comment: Comment; c
 }
 
 export default function IssuePage({ project, issue, members, sprints }: Props) {
-    const { currentTeam, auth } = usePage().props as { currentTeam: { slug: string }; auth: { user: { id: number } } };
+    const { currentTeam, auth } = usePage().props as {
+        currentTeam: { slug: string };
+        auth: { user: { id: number } };
+    };
     const baseUrl = `/${currentTeam.slug}/projects/${project.id}`;
     const issueUrl = `${baseUrl}/issues/${issue.id}`;
 
@@ -143,7 +150,10 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
         router.patch(issueUrl, { checklist: items }, { preserveScroll: true });
     }
 
-    const { data: commentData, setData: setCommentData, post: postComment, processing: commentProcessing, reset: resetComment } = useForm({ content: '' });
+    const {
+        data: commentData, setData: setCommentData,
+        post: postComment, processing: commentProcessing, reset: resetComment,
+    } = useForm({ content: '' });
 
     function patchField(field: string, value: unknown) {
         router.patch(issueUrl, { [field]: value }, { preserveScroll: true });
@@ -168,203 +178,263 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
         <>
             <Head title={`${issue.issue_key} – ${issue.title}`} />
 
-            <div className="flex flex-col gap-6 p-6">
-                <div className="flex items-center justify-between">
-                    <Link
-                        href={`${baseUrl}/backlog`}
-                        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-                    >
-                        <ArrowLeft className="size-4" /> Back to Backlog
-                    </Link>
-                    <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={deleteIssue}>
-                        <Trash2 className="size-4" />
-                    </Button>
+            <div className="relative flex min-h-full flex-col">
+
+                {/* Dot grid */}
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                        backgroundImage: 'radial-gradient(circle, color-mix(in oklch, var(--border) 70%, transparent) 1px, transparent 1px)',
+                        backgroundSize: '28px 28px',
+                    }}
+                />
+
+                {/* Gradient orb */}
+                <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+                    <div className="absolute -top-40 -right-32 size-[450px] rounded-full bg-primary/8 blur-3xl" />
                 </div>
 
-                <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
-                    <div className="space-y-6">
-                        <div className="flex items-center gap-2">
-                            <IssueTypeIcon type={issue.type} />
-                            <span className="text-sm font-medium text-muted-foreground">{issue.issue_key}</span>
-                            <Badge variant="outline" className={`text-xs ${STATUS_COLORS[issue.status]}`}>
-                                {STATUS_LABELS[issue.status]}
-                            </Badge>
-                        </div>
+                {/* ── Hero header ── */}
+                <header className="relative z-10 border-b border-border bg-card/70 px-4 py-4 backdrop-blur-sm sm:px-6 sm:py-5">
 
-                        <div>
-                            <p className="mb-1 text-xs font-medium text-muted-foreground">Title</p>
-                            <h2 className="text-xl font-bold">
-                                <EditableText value={issue.title} onSave={(v) => patchField('title', v)} />
-                            </h2>
-                        </div>
-
-                        <div>
-                            <p className="mb-1 text-xs font-medium text-muted-foreground">Description</p>
-                            <div className="rounded-md bg-muted/30 p-2 text-sm">
-                                <EditableText
-                                    value={issue.description ?? ''}
-                                    onSave={(v) => patchField('description', v)}
-                                    multiline
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            {checklistVisible ? (
-                                <IssueChecklist items={checklist} onChange={updateChecklist} />
-                            ) : (
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-muted-foreground"
-                                    onClick={() => setChecklistVisible(true)}
-                                >
-                                    <CheckSquare className="size-4" />
-                                    Add checklist
-                                </Button>
-                            )}
-                        </div>
-
-                        <div>
-                            <p className="mb-3 text-sm font-semibold">Comments ({issue.comments.length})</p>
-                            <div className="space-y-4">
-                                {issue.comments.map((c) => (
-                                    <CommentItem
-                                        key={c.id}
-                                        comment={c}
-                                        currentUserId={auth.user.id}
-                                        issueUrl={issueUrl}
-                                    />
-                                ))}
-                            </div>
-                            <Separator className="my-4" />
-                            <form onSubmit={submitComment} className="space-y-2">
-                                <textarea
-                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                                    rows={3}
-                                    placeholder="Add a comment..."
-                                    value={commentData.content}
-                                    onChange={(e) => setCommentData('content', e.target.value)}
-                                    required
-                                />
-                                <Button type="submit" size="sm" disabled={commentProcessing}>Add Comment</Button>
-                            </form>
-                        </div>
+                    {/* Nav row */}
+                    <div className="mb-3 flex items-center justify-between">
+                        <Link
+                            href={`${baseUrl}/backlog`}
+                            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                            <ArrowLeft className="size-4" />
+                            <span className="hidden sm:inline">Back to Backlog</span>
+                            <span className="sm:hidden">Backlog</span>
+                        </Link>
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={deleteIssue}
+                        >
+                            <Trash2 className="size-4" />
+                        </Button>
                     </div>
 
-                    <div className="space-y-4 rounded-xl border border-border bg-card p-4">
-                        <h3 className="text-sm font-semibold">Details</h3>
-                        <Separator />
+                    {/* Issue meta row */}
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <IssueTypeIcon type={issue.type} />
+                        <span className="font-mono text-sm font-medium text-muted-foreground">{issue.issue_key}</span>
+                        <span className="text-muted-foreground/50">·</span>
+                        <span className="text-sm text-muted-foreground">{project.name}</span>
+                        <Badge
+                            variant="outline"
+                            className={`ml-auto text-xs ${STATUS_COLORS[issue.status]}`}
+                        >
+                            {STATUS_LABELS[issue.status]}
+                        </Badge>
+                    </div>
 
-                        <div className="space-y-3">
+                    {/* Title */}
+                    <h1 className="text-xl font-bold leading-snug sm:text-2xl">
+                        <EditableText value={issue.title} onSave={(v) => patchField('title', v)} />
+                    </h1>
+
+                    {/* Compact metadata strip — visible only on mobile */}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 lg:hidden">
+                        <Badge variant="outline" className="gap-1 text-xs">
+                            <PriorityIcon priority={issue.priority} />
+                            {priorityLabel(issue.priority)}
+                        </Badge>
+                        {issue.assignee && (
+                            <Badge variant="outline" className="gap-1.5 text-xs">
+                                <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                                    {issue.assignee.name.slice(0, 1).toUpperCase()}
+                                </span>
+                                {issue.assignee.name}
+                            </Badge>
+                        )}
+                    </div>
+                </header>
+
+                {/* ── Content ── */}
+                <div className="relative z-10 flex-1 p-4 sm:p-6">
+                    <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+
+                        {/* ── Left: main content ── */}
+                        <div className="space-y-6">
+
                             <div>
-                                <p className="mb-1 text-xs text-muted-foreground">Status</p>
-                                <Select value={issue.status} onValueChange={(v) => patchField('status', v)}>
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="todo">To Do</SelectItem>
-                                        <SelectItem value="in_progress">In Progress</SelectItem>
-                                        <SelectItem value="in_review">In Review</SelectItem>
-                                        <SelectItem value="done">Done</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <p className="mb-1 text-xs font-medium text-muted-foreground">Description</p>
+                                <div className="rounded-md bg-muted/30 p-2 text-sm">
+                                    <EditableText
+                                        value={issue.description ?? ''}
+                                        onSave={(v) => patchField('description', v)}
+                                        multiline
+                                    />
+                                </div>
                             </div>
 
                             <div>
-                                <p className="mb-1 text-xs text-muted-foreground">Type</p>
-                                <Select value={issue.type} onValueChange={(v) => patchField('type', v)}>
-                                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="task">Task</SelectItem>
-                                        <SelectItem value="bug">Bug</SelectItem>
-                                        <SelectItem value="story">Story</SelectItem>
-                                        <SelectItem value="epic">Epic</SelectItem>
-                                        <SelectItem value="subtask">Subtask</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                {checklistVisible ? (
+                                    <IssueChecklist items={checklist} onChange={updateChecklist} />
+                                ) : (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-muted-foreground"
+                                        onClick={() => setChecklistVisible(true)}
+                                    >
+                                        <CheckSquare className="size-4" />
+                                        Add checklist
+                                    </Button>
+                                )}
                             </div>
 
                             <div>
-                                <p className="mb-1 text-xs text-muted-foreground">Priority</p>
-                                <Select value={issue.priority} onValueChange={(v) => patchField('priority', v)}>
-                                    <SelectTrigger className="h-8 text-xs">
-                                        <SelectValue>
-                                            <div className="flex items-center gap-1.5">
-                                                <PriorityIcon priority={issue.priority} />
-                                                {priorityLabel(issue.priority)}
-                                            </div>
-                                        </SelectValue>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="lowest">Lowest</SelectItem>
-                                        <SelectItem value="low">Low</SelectItem>
-                                        <SelectItem value="medium">Medium</SelectItem>
-                                        <SelectItem value="high">High</SelectItem>
-                                        <SelectItem value="highest">Highest</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div>
-                                <p className="mb-1 text-xs text-muted-foreground">Assignee</p>
-                                <Select
-                                    value={issue.assignee?.id?.toString() ?? 'none'}
-                                    onValueChange={(v) => patchField('assignee_id', v === 'none' ? null : Number(v))}
-                                >
-                                    <SelectTrigger className="h-8 text-xs">
-                                        <SelectValue placeholder="Unassigned" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Unassigned</SelectItem>
-                                        {members.map((m) => (
-                                            <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div>
-                                <p className="mb-1 text-xs text-muted-foreground">Sprint</p>
-                                <Select
-                                    value={issue.sprint_id?.toString() ?? 'none'}
-                                    onValueChange={(v) => patchField('sprint_id', v === 'none' ? null : Number(v))}
-                                >
-                                    <SelectTrigger className="h-8 text-xs">
-                                        <SelectValue placeholder="Backlog" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Backlog</SelectItem>
-                                        {sprints.map((s) => (
-                                            <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div>
-                                <p className="mb-1 text-xs text-muted-foreground">Story Points</p>
-                                <input
-                                    type="number"
-                                    className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
-                                    defaultValue={issue.story_points ?? ''}
-                                    min={1}
-                                    max={100}
-                                    placeholder="—"
-                                    onBlur={(e) => {
-                                        const v = e.target.value ? Number(e.target.value) : null;
-                                        if (v !== issue.story_points) patchField('story_points', v);
-                                    }}
-                                />
-                            </div>
-
-                            <Separator />
-
-                            <div className="space-y-1 text-xs text-muted-foreground">
-                                <p>Reporter: <span className="text-foreground">{issue.reporter?.name ?? '—'}</span></p>
-                                <p>Created: <span className="text-foreground">{new Date(issue.created_at).toLocaleDateString()}</span></p>
-                                <p>Updated: <span className="text-foreground">{new Date(issue.updated_at).toLocaleDateString()}</span></p>
+                                <p className="mb-3 text-sm font-semibold">
+                                    Comments ({issue.comments.length})
+                                </p>
+                                <div className="space-y-4">
+                                    {issue.comments.map((c) => (
+                                        <CommentItem
+                                            key={c.id}
+                                            comment={c}
+                                            currentUserId={auth.user.id}
+                                            issueUrl={issueUrl}
+                                        />
+                                    ))}
+                                </div>
+                                <Separator className="my-4" />
+                                <form onSubmit={submitComment} className="space-y-2">
+                                    <textarea
+                                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                                        rows={3}
+                                        placeholder="Add a comment..."
+                                        value={commentData.content}
+                                        onChange={(e) => setCommentData('content', e.target.value)}
+                                        required
+                                    />
+                                    <Button type="submit" size="sm" disabled={commentProcessing}>
+                                        Add Comment
+                                    </Button>
+                                </form>
                             </div>
                         </div>
+
+                        {/* ── Right: details sidebar ── */}
+                        <div className="h-fit space-y-4 rounded-xl border border-border bg-card/80 p-4 backdrop-blur-sm">
+                            <h3 className="text-sm font-semibold">Details</h3>
+                            <Separator />
+
+                            <div className="space-y-3">
+                                <div>
+                                    <p className="mb-1 text-xs text-muted-foreground">Status</p>
+                                    <Select value={issue.status} onValueChange={(v) => patchField('status', v)}>
+                                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="todo">To Do</SelectItem>
+                                            <SelectItem value="in_progress">In Progress</SelectItem>
+                                            <SelectItem value="in_review">In Review</SelectItem>
+                                            <SelectItem value="done">Done</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <p className="mb-1 text-xs text-muted-foreground">Type</p>
+                                    <Select value={issue.type} onValueChange={(v) => patchField('type', v)}>
+                                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="task">Task</SelectItem>
+                                            <SelectItem value="bug">Bug</SelectItem>
+                                            <SelectItem value="story">Story</SelectItem>
+                                            <SelectItem value="epic">Epic</SelectItem>
+                                            <SelectItem value="subtask">Subtask</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <p className="mb-1 text-xs text-muted-foreground">Priority</p>
+                                    <Select value={issue.priority} onValueChange={(v) => patchField('priority', v)}>
+                                        <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue>
+                                                <div className="flex items-center gap-1.5">
+                                                    <PriorityIcon priority={issue.priority} />
+                                                    {priorityLabel(issue.priority)}
+                                                </div>
+                                            </SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="lowest">Lowest</SelectItem>
+                                            <SelectItem value="low">Low</SelectItem>
+                                            <SelectItem value="medium">Medium</SelectItem>
+                                            <SelectItem value="high">High</SelectItem>
+                                            <SelectItem value="highest">Highest</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <p className="mb-1 text-xs text-muted-foreground">Assignee</p>
+                                    <Select
+                                        value={issue.assignee?.id?.toString() ?? 'none'}
+                                        onValueChange={(v) => patchField('assignee_id', v === 'none' ? null : Number(v))}
+                                    >
+                                        <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Unassigned" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Unassigned</SelectItem>
+                                            {members.map((m) => (
+                                                <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <p className="mb-1 text-xs text-muted-foreground">Sprint</p>
+                                    <Select
+                                        value={issue.sprint_id?.toString() ?? 'none'}
+                                        onValueChange={(v) => patchField('sprint_id', v === 'none' ? null : Number(v))}
+                                    >
+                                        <SelectTrigger className="h-8 text-xs">
+                                            <SelectValue placeholder="Backlog" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Backlog</SelectItem>
+                                            {sprints.map((s) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <p className="mb-1 text-xs text-muted-foreground">Story Points</p>
+                                    <input
+                                        type="number"
+                                        className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                                        defaultValue={issue.story_points ?? ''}
+                                        min={1}
+                                        max={100}
+                                        placeholder="—"
+                                        onBlur={(e) => {
+                                            const v = e.target.value ? Number(e.target.value) : null;
+                                            if (v !== issue.story_points) patchField('story_points', v);
+                                        }}
+                                    />
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-1 text-xs text-muted-foreground">
+                                    <p>Reporter: <span className="text-foreground">{issue.reporter?.name ?? '—'}</span></p>
+                                    <p>Created: <span className="text-foreground">{new Date(issue.created_at).toLocaleDateString()}</span></p>
+                                    <p>Updated: <span className="text-foreground">{new Date(issue.updated_at).toLocaleDateString()}</span></p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>

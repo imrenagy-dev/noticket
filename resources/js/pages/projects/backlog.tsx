@@ -32,8 +32,25 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
         <>
             <Head title={`${project.name} – Backlog`} />
 
-            <div className="flex flex-col gap-4 p-6">
-                <div className="flex items-center justify-between">
+            <div className="relative flex flex-col gap-4 p-6">
+
+                {/* Dot grid background */}
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                        backgroundImage: 'radial-gradient(circle, color-mix(in oklch, var(--border) 70%, transparent) 1px, transparent 1px)',
+                        backgroundSize: '28px 28px',
+                    }}
+                />
+
+                {/* Gradient orb */}
+                <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+                    <div className="absolute -top-40 right-0 size-[450px] rounded-full bg-primary/8 blur-3xl" />
+                </div>
+
+                {/* Header */}
+                <div className="relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl font-bold">{project.name}</h1>
                         <div className="flex rounded-md border border-border text-sm">
@@ -61,49 +78,51 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
                     </div>
                 </div>
 
-                {sprints.map((sprint) => (
-                    <SprintSection
-                        key={sprint.id}
-                        projectId={project.id}
-                        sprint={sprint}
-                        members={members}
-                        allSprints={allSprints}
-                        canStart={!hasActiveSprint}
-                    />
-                ))}
+                <div className="relative z-10 flex flex-col gap-4">
+                    {sprints.map((sprint) => (
+                        <SprintSection
+                            key={sprint.id}
+                            projectId={project.id}
+                            sprint={sprint}
+                            members={members}
+                            allSprints={allSprints}
+                            canStart={!hasActiveSprint}
+                        />
+                    ))}
 
-                <div className="rounded-lg border border-border bg-card">
-                    <div
-                        className="flex cursor-pointer items-center gap-2 px-4 py-3"
-                        onClick={() => setBacklogCollapsed(c => !c)}
-                    >
-                        <span className="font-semibold">Backlog</span>
-                        <span className="text-sm text-muted-foreground">{backlog.length} issues</span>
-                        <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="ghost" onClick={() => setCreateOpen(true)} className="h-7 text-xs">
-                                + Issue
-                            </Button>
+                    <div className="rounded-xl border border-border bg-card/80 shadow-sm backdrop-blur-sm">
+                        <div
+                            className="flex cursor-pointer items-center gap-2 px-4 py-3"
+                            onClick={() => setBacklogCollapsed(c => !c)}
+                        >
+                            <span className="font-semibold">Backlog</span>
+                            <span className="text-sm text-muted-foreground">{backlog.length} issues</span>
+                            <div className="ml-auto" onClick={(e) => e.stopPropagation()}>
+                                <Button size="sm" variant="ghost" onClick={() => setCreateOpen(true)} className="h-7 text-xs">
+                                    + Issue
+                                </Button>
+                            </div>
                         </div>
+
+                        {!backlogCollapsed && (
+                            <div className="border-t border-border">
+                                {backlog.length === 0 ? (
+                                    <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                                        No issues in the backlog.{' '}
+                                        <button className="underline" onClick={() => setCreateOpen(true)}>Create one</button>
+                                    </p>
+                                ) : (
+                                    <div className="divide-y divide-border">
+                                        {backlog.map((issue) => (
+                                            <div key={issue.id} className="px-4 py-2">
+                                                <IssueCard issue={issue} projectId={project.id} compact />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
-
-                    {!backlogCollapsed && (
-                        <div className="border-t border-border">
-                            {backlog.length === 0 ? (
-                                <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                                    No issues in the backlog.{' '}
-                                    <button className="underline" onClick={() => setCreateOpen(true)}>Create one</button>
-                                </p>
-                            ) : (
-                                <div className="divide-y divide-border">
-                                    {backlog.map((issue) => (
-                                        <div key={issue.id} className="px-4 py-2">
-                                            <IssueCard issue={issue} projectId={project.id} compact />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
                 </div>
             </div>
 

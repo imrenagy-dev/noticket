@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Layers, ListTodo } from 'lucide-react';
+import { CheckCircle2, Layers, ListTodo, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { KanbanBoard } from '@/components/project/kanban-board';
 import type { BoardColumns, IssueUser, Project, Sprint } from '@/types';
@@ -20,8 +20,25 @@ export default function Board({ project, activeSprint, columns, members, sprints
         <>
             <Head title={`${project.name} – Board`} />
 
-            <div className="flex h-full flex-col gap-4 p-6">
-                <div className="flex items-center justify-between">
+            <div className="relative flex h-full flex-col gap-4 p-6">
+
+                {/* Dot grid background */}
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                        backgroundImage: 'radial-gradient(circle, color-mix(in oklch, var(--border) 70%, transparent) 1px, transparent 1px)',
+                        backgroundSize: '28px 28px',
+                    }}
+                />
+
+                {/* Gradient orb */}
+                <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+                    <div className="absolute -top-40 -right-32 size-[450px] rounded-full bg-primary/8 blur-3xl" />
+                </div>
+
+                {/* Header */}
+                <div className="relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <h1 className="text-xl font-bold">{project.name}</h1>
                         <div className="flex rounded-md border border-border text-sm">
@@ -42,34 +59,42 @@ export default function Board({ project, activeSprint, columns, members, sprints
                 </div>
 
                 {activeSprint && (
-                    <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-2.5">
-                        <CheckCircle2 className="size-4 text-blue-500" />
-                        <span className="font-medium">{activeSprint.name}</span>
-                        {activeSprint.ends_at && (
-                            <span className="text-sm text-muted-foreground">
-                                · Due {new Date(activeSprint.ends_at).toLocaleDateString()}
-                            </span>
-                        )}
-                        {activeSprint.goal && (
-                            <span className="text-sm text-muted-foreground">· {activeSprint.goal}</span>
-                        )}
-                        <div className="ml-auto">
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => router.post(`${baseUrl}/sprints/${activeSprint.id}/complete`, {}, { preserveScroll: true })}
-                            >
-                                Complete Sprint
-                            </Button>
+                    <div className="relative z-10 flex items-center gap-3 rounded-xl border border-border bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                            <Zap className="size-4 text-primary" />
                         </div>
+                        <div className="min-w-0 flex-1">
+                            <span className="font-semibold">{activeSprint.name}</span>
+                            {activeSprint.ends_at && (
+                                <span className="ml-2 text-sm text-muted-foreground">
+                                    · Due {new Date(activeSprint.ends_at).toLocaleDateString()}
+                                </span>
+                            )}
+                            {activeSprint.goal && (
+                                <span className="ml-2 text-sm text-muted-foreground">· {activeSprint.goal}</span>
+                            )}
+                        </div>
+                        <span className="rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-semibold text-green-600 dark:text-green-400">
+                            Active
+                        </span>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => router.post(`${baseUrl}/sprints/${activeSprint.id}/complete`, {}, { preserveScroll: true })}
+                        >
+                            <CheckCircle2 className="size-4" />
+                            Complete Sprint
+                        </Button>
                     </div>
                 )}
 
                 {!activeSprint ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-4">
-                        <Layers className="size-12 text-muted-foreground/40" />
+                    <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4">
+                        <div className="flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+                            <Layers className="size-8 text-primary/60" />
+                        </div>
                         <div className="text-center">
-                            <p className="font-medium">No active sprint</p>
+                            <p className="font-semibold">No active sprint</p>
                             <p className="text-sm text-muted-foreground">Go to Backlog to create and start a sprint</p>
                         </div>
                         <Button variant="outline" asChild>
@@ -77,7 +102,7 @@ export default function Board({ project, activeSprint, columns, members, sprints
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex-1 overflow-hidden">
+                    <div className="relative z-10 flex-1 overflow-hidden">
                         <KanbanBoard
                             projectId={project.id}
                             columns={columns}
