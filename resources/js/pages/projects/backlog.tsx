@@ -32,7 +32,7 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
         <>
             <Head title={`${project.name} – Backlog`} />
 
-            <div className="relative flex flex-col gap-4 p-6">
+            <div className="relative flex flex-1 flex-col gap-4 p-4 sm:p-6">
 
                 {/* Dot grid background */}
                 <div

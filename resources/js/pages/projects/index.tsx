@@ -42,7 +42,7 @@ export default function ProjectsIndex({ projects }: Props) {
         <>
             <Head title="Projects" />
 
-            <div className="relative flex flex-col gap-6 p-4 sm:p-6">
+            <div className="relative flex flex-1 flex-col gap-6 p-4 sm:p-6">
 
                 {/* Dot grid */}
                 <div

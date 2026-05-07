@@ -178,7 +178,7 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
         <>
             <Head title={`${issue.issue_key} – ${issue.title}`} />
 
-            <div className="relative flex min-h-full flex-col">
+            <div className="relative flex flex-1 flex-col">
 
                 {/* Dot grid */}
                 <div

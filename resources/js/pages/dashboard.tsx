@@ -121,7 +121,7 @@ export default function Dashboard({ stats, myIssues, recentIssues }: Props) {
         <>
             <Head title="Dashboard" />
 
-            <div className="relative flex flex-col gap-6 p-4 sm:p-6">
+            <div className="relative flex flex-1 flex-col gap-6 p-4 sm:p-6">
 
                 {/* Dot grid */}
                 <div

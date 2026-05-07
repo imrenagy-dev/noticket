@@ -20,7 +20,7 @@ export default function Board({ project, activeSprint, columns, members, sprints
         <>
             <Head title={`${project.name} – Board`} />
 
-            <div className="relative flex h-full flex-col gap-4 p-6">
+            <div className="relative flex flex-1 flex-col gap-4 p-4 sm:p-6">
 
                 {/* Dot grid background */}
                 <div
