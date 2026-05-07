@@ -1,5 +1,12 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class([
+    'dark'             => in_array($appearance ?? 'system', ['dark', 'brown', 'blue', 'green-dark']),
+    'theme-brown'      => ($appearance ?? 'system') === 'brown',
+    'theme-blue'       => ($appearance ?? 'system') === 'blue',
+    'theme-azure'      => ($appearance ?? 'system') === 'azure',
+    'theme-green-dark' => ($appearance ?? 'system') === 'green-dark',
+    'theme-green-light'=> ($appearance ?? 'system') === 'green-light',
+])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,7 +39,8 @@
 
         @php
             $fav = match($appearance ?? 'system') {
-                'light' => ['ico'=>'/favicons/light.ico','p32'=>'/favicons/light-32.png','svg'=>'/favicons/light.svg','apple'=>'/favicons/light-apple.png'],
+                'light', 'green-light'
+                        => ['ico'=>'/favicons/light.ico','p32'=>'/favicons/light-32.png','svg'=>'/favicons/light.svg','apple'=>'/favicons/light-apple.png'],
                 'brown' => ['ico'=>'/favicons/brown.ico','p32'=>'/favicons/brown-32.png','svg'=>'/favicons/brown.svg','apple'=>'/favicons/brown-apple.png'],
                 'blue'  => ['ico'=>'/favicons/blue.ico', 'p32'=>'/favicons/blue-32.png', 'svg'=>'/favicons/blue.svg', 'apple'=>'/favicons/blue-apple.png'],
                 'azure' => ['ico'=>'/favicons/azure.ico','p32'=>'/favicons/azure-32.png','svg'=>'/favicons/azure.svg','apple'=>'/favicons/azure-apple.png'],

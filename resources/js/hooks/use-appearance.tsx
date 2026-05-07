@@ -1,18 +1,20 @@
 import { useSyncExternalStore } from 'react';
 
 export type ResolvedAppearance = 'light' | 'dark';
-export type Appearance = ResolvedAppearance | 'system' | 'brown' | 'blue' | 'azure';
+export type Appearance = ResolvedAppearance | 'system' | 'brown' | 'blue' | 'azure' | 'green-dark' | 'green-light';
 
 // ── Per-theme favicon paths ────────────────────────────────────────────────
 type FavSet = { ico: string; p32: string; svg: string; apple: string };
 
 const FAVICON: Record<Appearance, FavSet> = {
-    system: { ico: '/favicon.ico',        p32: '/favicon-32x32.png',    svg: '/favicon.svg',        apple: '/apple-touch-icon.png'     },
-    dark:   { ico: '/favicon.ico',        p32: '/favicon-32x32.png',    svg: '/favicon.svg',        apple: '/apple-touch-icon.png'     },
-    light:  { ico: '/favicons/light.ico', p32: '/favicons/light-32.png',svg: '/favicons/light.svg', apple: '/favicons/light-apple.png' },
-    brown:  { ico: '/favicons/brown.ico', p32: '/favicons/brown-32.png',svg: '/favicons/brown.svg', apple: '/favicons/brown-apple.png' },
-    blue:   { ico: '/favicons/blue.ico',  p32: '/favicons/blue-32.png', svg: '/favicons/blue.svg',  apple: '/favicons/blue-apple.png'  },
-    azure:  { ico: '/favicons/azure.ico', p32: '/favicons/azure-32.png',svg: '/favicons/azure.svg', apple: '/favicons/azure-apple.png' },
+    system:      { ico: '/favicon.ico',        p32: '/favicon-32x32.png',    svg: '/favicon.svg',        apple: '/apple-touch-icon.png'     },
+    dark:        { ico: '/favicon.ico',        p32: '/favicon-32x32.png',    svg: '/favicon.svg',        apple: '/apple-touch-icon.png'     },
+    light:       { ico: '/favicons/light.ico', p32: '/favicons/light-32.png',svg: '/favicons/light.svg', apple: '/favicons/light-apple.png' },
+    brown:       { ico: '/favicons/brown.ico', p32: '/favicons/brown-32.png',svg: '/favicons/brown.svg', apple: '/favicons/brown-apple.png' },
+    blue:        { ico: '/favicons/blue.ico',  p32: '/favicons/blue-32.png', svg: '/favicons/blue.svg',  apple: '/favicons/blue-apple.png'  },
+    azure:       { ico: '/favicons/azure.ico', p32: '/favicons/azure-32.png',svg: '/favicons/azure.svg', apple: '/favicons/azure-apple.png' },
+    'green-dark':  { ico: '/favicon.ico',      p32: '/favicon-32x32.png',    svg: '/favicon.svg',        apple: '/apple-touch-icon.png'     },
+    'green-light': { ico: '/favicons/light.ico',p32: '/favicons/light-32.png',svg: '/favicons/light.svg',apple: '/favicons/light-apple.png' },
 };
 
 const setFav = (key: string, href: string): void => {
@@ -62,7 +64,7 @@ const getStoredAppearance = (): Appearance => {
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance === 'dark' || appearance === 'brown' || appearance === 'blue' || (appearance === 'system' && prefersDark());
+    return appearance === 'dark' || appearance === 'brown' || appearance === 'blue' || appearance === 'green-dark' || (appearance === 'system' && prefersDark());
 };
 
 const applyTheme = (appearance: Appearance): void => {
@@ -76,6 +78,8 @@ const applyTheme = (appearance: Appearance): void => {
     document.documentElement.classList.toggle('theme-brown', appearance === 'brown');
     document.documentElement.classList.toggle('theme-blue', appearance === 'blue');
     document.documentElement.classList.toggle('theme-azure', appearance === 'azure');
+    document.documentElement.classList.toggle('theme-green-dark', appearance === 'green-dark');
+    document.documentElement.classList.toggle('theme-green-light', appearance === 'green-light');
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 
     applyFavicon(appearance);

@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { CheckCircle2, Coffee, Gem, Monitor, Moon, Sparkles, Sun } from 'lucide-react';
+import { CheckCircle2, Coffee, Gem, Leaf, Monitor, Moon, Sparkles, Sprout, Sun } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Appearance } from '@/hooks/use-appearance';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -14,24 +14,28 @@ interface Palette {
 }
 
 const P: Record<Appearance, Palette> = {
-    //                   bg          sidebar     card        border      primary     muted       mutedFg     sidebarFg
-    light:  { bg:'#FFFFFF', sidebar:'#F9F9F9', card:'#FFFFFF', border:'#E4E4E4', primary:'#252525', muted:'#F5F5F5', mutedFg:'#6E6E6E', sidebarFg:'#1A1A1A' },
-    dark:   { bg:'#171717', sidebar:'#252525', card:'#171717', border:'#333333', primary:'#F0F0F0', muted:'#333333', mutedFg:'#8A8A8A', sidebarFg:'#F0F0F0' },
-    brown:  { bg:'#1B1009', sidebar:'#130B05', card:'#221308', border:'#3D2010', primary:'#C89050', muted:'#2C180A', mutedFg:'#907060', sidebarFg:'#E8D0B8' },
-    blue:   { bg:'#080C18', sidebar:'#05091A', card:'#0C1028', border:'#1C2850', primary:'#4080DF', muted:'#101830', mutedFg:'#5070A8', sidebarFg:'#D8DDF5' },
-    azure:  { bg:'#F0F5FF', sidebar:'#DCE9FF', card:'#FFFFFF', border:'#BDDAFF', primary:'#2B63C8', muted:'#E0EEFF', mutedFg:'#4870A8', sidebarFg:'#1A2A50' },
-    system: { bg:'#171717', sidebar:'#252525', card:'#171717', border:'#333333', primary:'#F0F0F0', muted:'#333333', mutedFg:'#8A8A8A', sidebarFg:'#F0F0F0' },
+    //                      bg          sidebar     card        border      primary     muted       mutedFg     sidebarFg
+    light:        { bg:'#FFFFFF', sidebar:'#F9F9F9', card:'#FFFFFF', border:'#E4E4E4', primary:'#252525', muted:'#F5F5F5', mutedFg:'#6E6E6E', sidebarFg:'#1A1A1A' },
+    dark:         { bg:'#171717', sidebar:'#252525', card:'#171717', border:'#333333', primary:'#F0F0F0', muted:'#333333', mutedFg:'#8A8A8A', sidebarFg:'#F0F0F0' },
+    brown:        { bg:'#1B1009', sidebar:'#130B05', card:'#221308', border:'#3D2010', primary:'#C89050', muted:'#2C180A', mutedFg:'#907060', sidebarFg:'#E8D0B8' },
+    blue:         { bg:'#080C18', sidebar:'#05091A', card:'#0C1028', border:'#1C2850', primary:'#4080DF', muted:'#101830', mutedFg:'#5070A8', sidebarFg:'#D8DDF5' },
+    azure:        { bg:'#F0F5FF', sidebar:'#DCE9FF', card:'#FFFFFF', border:'#BDDAFF', primary:'#2B63C8', muted:'#E0EEFF', mutedFg:'#4870A8', sidebarFg:'#1A2A50' },
+    'green-dark': { bg:'#0A1A0C', sidebar:'#071008', card:'#0F2012', border:'#1C3522', primary:'#19BB5A', muted:'#122016', mutedFg:'#4E7A5A', sidebarFg:'#E6F5EB' },
+    'green-light':{ bg:'#F0FAF3', sidebar:'#E2F5E8', card:'#FFFFFF', border:'#C6E8D4', primary:'#0E8840', muted:'#E6F5EB', mutedFg:'#477856', sidebarFg:'#0A2212' },
+    system:       { bg:'#171717', sidebar:'#252525', card:'#171717', border:'#333333', primary:'#F0F0F0', muted:'#333333', mutedFg:'#8A8A8A', sidebarFg:'#F0F0F0' },
 };
 
 // ── Theme descriptors ─────────────────────────────────────────────────────
 
 const THEMES: { value: Appearance; icon: LucideIcon; label: string; desc: string }[] = [
-    { value: 'light',  icon: Sun,      label: 'Light',  desc: 'Clean & crisp'      },
-    { value: 'dark',   icon: Moon,     label: 'Dark',   desc: 'Easy on the eyes'   },
-    { value: 'brown',  icon: Coffee,   label: 'Brown',  desc: 'Warm & cozy'        },
-    { value: 'blue',   icon: Sparkles, label: 'Blue',   desc: 'Deep & electric'    },
-    { value: 'azure',  icon: Gem,      label: 'Azure',  desc: 'Fresh & polished'   },
-    { value: 'system', icon: Monitor,  label: 'System', desc: 'Follows your OS'    },
+    { value: 'light',       icon: Sun,      label: 'Light',   desc: 'Clean & crisp'      },
+    { value: 'dark',        icon: Moon,     label: 'Dark',    desc: 'Easy on the eyes'   },
+    { value: 'brown',       icon: Coffee,   label: 'Brown',   desc: 'Warm & cozy'        },
+    { value: 'blue',        icon: Sparkles, label: 'Blue',    desc: 'Deep & electric'    },
+    { value: 'azure',       icon: Gem,      label: 'Azure',   desc: 'Fresh & polished'   },
+    { value: 'green-dark',  icon: Leaf,     label: 'Forest',  desc: 'Rich & natural'     },
+    { value: 'green-light', icon: Sprout,   label: 'Meadow',  desc: 'Fresh & calm'       },
+    { value: 'system',      icon: Monitor,  label: 'System',  desc: 'Follows your OS'    },
 ];
 
 // ── Mini app preview (sidebar + header + kanban mock) ─────────────────────
@@ -165,7 +169,7 @@ export default function Appearance() {
                     </p>
                 </header>
 
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                     {THEMES.map(({ value, icon: Icon, label, desc }) => {
                         const active = appearance === value;
                         return (
