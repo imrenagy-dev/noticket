@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 export type ResolvedAppearance = 'light' | 'dark';
-export type Appearance = ResolvedAppearance | 'system';
+export type Appearance = ResolvedAppearance | 'system' | 'brown' | 'blue' | 'azure';
 
 export type UseAppearanceReturn = {
     readonly appearance: Appearance;
@@ -38,7 +38,7 @@ const getStoredAppearance = (): Appearance => {
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
-    return appearance === 'dark' || (appearance === 'system' && prefersDark());
+    return appearance === 'dark' || appearance === 'brown' || appearance === 'blue' || (appearance === 'system' && prefersDark());
 };
 
 const applyTheme = (appearance: Appearance): void => {
@@ -49,6 +49,9 @@ const applyTheme = (appearance: Appearance): void => {
     const isDark = isDarkMode(appearance);
 
     document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.classList.toggle('theme-brown', appearance === 'brown');
+    document.documentElement.classList.toggle('theme-blue', appearance === 'blue');
+    document.documentElement.classList.toggle('theme-azure', appearance === 'azure');
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 };
 

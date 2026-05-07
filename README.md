@@ -1,4 +1,4 @@
-# NoTicket
+# No Ticket
 
 A Jira-like project management app built with **Laravel 13**, **React 19**, **Inertia.js**, **Tailwind CSS 4**, and **MySQL**.
 

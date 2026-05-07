@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.4.0 — No Ticket
+
+**Branch:** `claude-vibe`
+**Date:** 2026-05-07
+
+---
+
+### Overview
+
+Three new color themes, a redesigned landing page with a live Kanban mockup, and branding fixes.
+
+---
+
+### New Features
+
+#### Color Themes
+- Added **Brown** — dark warm brown palette (Coffee icon)
+- Added **Blue** — dark deep blue with neon glow effects (Sparkles icon)
+- Added **Azure** — light blue theme with polished elevation effects (Gem icon)
+- Brown and Blue are treated as dark-mode variants; Azure is light-mode
+- Theme-specific CSS enhancements per theme:
+  - **Azure** — smooth transitions on interactive elements, blue focus-ring glow, primary button shadow/glow, card elevation with inset highlight, sidebar active glow
+  - **Blue** — transitions on interactive elements, neon focus-ring glow, primary button neon glow, card depth with edge highlight, sidebar active glow
+- `Appearance` type extended: `'light' | 'dark' | 'system' | 'brown' | 'blue' | 'azure'`
+- `applyTheme` toggles `.theme-brown`, `.theme-blue`, `.theme-azure` CSS classes on `<html>`
+
+#### Welcome Page Redesign
+- Full rewrite of the landing page (`welcome.tsx`)
+- Interactive Kanban board mockup showing a simulated board with 4 columns (To Do / In Progress / In Review / Done)
+- Mock issue cards with type badges, priority colours, and avatar initials
+- Browser chrome frame around the mockup for realism
+
+---
+
+### Branding Fixes
+
+- App sidebar logo label changed from "Laravel Starter Kit" → "No Ticket"
+- `.env.example` `APP_NAME` updated from `Laravel` → `"No Ticket"`
+- README heading corrected from `NoTicket` → `No Ticket`
+
+---
+
+### Changed Files
+
+**Frontend**
+- `resources/css/app.css` — added `.theme-brown`, `.theme-blue`, `.theme-azure` with full CSS variable sets and theme-specific effect rules
+- `resources/js/hooks/use-appearance.tsx` — extended `Appearance` type; `isDarkMode` handles brown/blue; `applyTheme` toggles theme classes
+- `resources/js/components/appearance-tabs.tsx` — added Brown, Blue, Azure tabs with Coffee/Sparkles/Gem icons
+- `resources/js/pages/welcome.tsx` — full rewrite with `KanbanMockup` component and feature highlights
+- `resources/js/components/app-logo.tsx` — sidebar label updated to "No Ticket"
+
+**Config**
+- `.env.example` — `APP_NAME` corrected
+
+---
+
 ## v0.3.0 — No Ticket
 
 **Branch:** `claude-vibe`
