@@ -3,6 +3,30 @@ import { useSyncExternalStore } from 'react';
 export type ResolvedAppearance = 'light' | 'dark';
 export type Appearance = ResolvedAppearance | 'system' | 'brown' | 'blue' | 'azure';
 
+// ── Per-theme favicon paths ────────────────────────────────────────────────
+type FavSet = { ico: string; p32: string; svg: string; apple: string };
+
+const FAVICON: Record<Appearance, FavSet> = {
+    system: { ico: '/favicon.ico',        p32: '/favicon-32x32.png',    svg: '/favicon.svg',        apple: '/apple-touch-icon.png'     },
+    dark:   { ico: '/favicon.ico',        p32: '/favicon-32x32.png',    svg: '/favicon.svg',        apple: '/apple-touch-icon.png'     },
+    light:  { ico: '/favicons/light.ico', p32: '/favicons/light-32.png',svg: '/favicons/light.svg', apple: '/favicons/light-apple.png' },
+    brown:  { ico: '/favicons/brown.ico', p32: '/favicons/brown-32.png',svg: '/favicons/brown.svg', apple: '/favicons/brown-apple.png' },
+    blue:   { ico: '/favicons/blue.ico',  p32: '/favicons/blue-32.png', svg: '/favicons/blue.svg',  apple: '/favicons/blue-apple.png'  },
+    azure:  { ico: '/favicons/azure.ico', p32: '/favicons/azure-32.png',svg: '/favicons/azure.svg', apple: '/favicons/azure-apple.png' },
+};
+
+const setFav = (key: string, href: string): void => {
+    document.querySelector<HTMLLinkElement>(`link[data-fav="${key}"]`)?.setAttribute('href', href);
+};
+
+const applyFavicon = (appearance: Appearance): void => {
+    const f = FAVICON[appearance];
+    setFav('ico',   f.ico);
+    setFav('p32',   f.p32);
+    setFav('svg',   f.svg);
+    setFav('apple', f.apple);
+};
+
 export type UseAppearanceReturn = {
     readonly appearance: Appearance;
     readonly resolvedAppearance: ResolvedAppearance;
@@ -53,6 +77,8 @@ const applyTheme = (appearance: Appearance): void => {
     document.documentElement.classList.toggle('theme-blue', appearance === 'blue');
     document.documentElement.classList.toggle('theme-azure', appearance === 'azure');
     document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
+    applyFavicon(appearance);
 };
 
 const subscribe = (callback: () => void) => {

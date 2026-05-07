@@ -30,11 +30,19 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
-        <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
-        <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php
+            $fav = match($appearance ?? 'system') {
+                'light' => ['ico'=>'/favicons/light.ico','p32'=>'/favicons/light-32.png','svg'=>'/favicons/light.svg','apple'=>'/favicons/light-apple.png'],
+                'brown' => ['ico'=>'/favicons/brown.ico','p32'=>'/favicons/brown-32.png','svg'=>'/favicons/brown.svg','apple'=>'/favicons/brown-apple.png'],
+                'blue'  => ['ico'=>'/favicons/blue.ico', 'p32'=>'/favicons/blue-32.png', 'svg'=>'/favicons/blue.svg', 'apple'=>'/favicons/blue-apple.png'],
+                'azure' => ['ico'=>'/favicons/azure.ico','p32'=>'/favicons/azure-32.png','svg'=>'/favicons/azure.svg','apple'=>'/favicons/azure-apple.png'],
+                default => ['ico'=>'/favicon.ico',       'p32'=>'/favicon-32x32.png',    'svg'=>'/favicon.svg',      'apple'=>'/apple-touch-icon.png'],
+            };
+        @endphp
+        <link data-fav="ico"   rel="icon"             href="{{ $fav['ico'] }}"   sizes="16x16 32x32 48x48">
+        <link data-fav="p32"   rel="icon"             href="{{ $fav['p32'] }}"   type="image/png" sizes="32x32">
+        <link data-fav="svg"   rel="icon"             href="{{ $fav['svg'] }}"   type="image/svg+xml">
+        <link data-fav="apple" rel="apple-touch-icon" href="{{ $fav['apple'] }}">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
