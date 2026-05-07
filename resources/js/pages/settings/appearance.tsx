@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { CheckCircle2, Coffee, Gem, Leaf, Monitor, Moon, Sparkles, Sprout, Sun } from 'lucide-react';
+import { CheckCircle2, CloudFog, CloudMoon, Coffee, Flame, Gem, Leaf, Monitor, Moon, Sparkles, Sprout, Sun, SunDim } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Appearance } from '@/hooks/use-appearance';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -22,6 +22,10 @@ const P: Record<Appearance, Palette> = {
     azure:        { bg:'#F0F5FF', sidebar:'#DCE9FF', card:'#FFFFFF', border:'#BDDAFF', primary:'#2B63C8', muted:'#E0EEFF', mutedFg:'#4870A8', sidebarFg:'#1A2A50' },
     'green-dark': { bg:'#0A1A0C', sidebar:'#071008', card:'#0F2012', border:'#1C3522', primary:'#19BB5A', muted:'#122016', mutedFg:'#4E7A5A', sidebarFg:'#E6F5EB' },
     'green-light':{ bg:'#F0FAF3', sidebar:'#E2F5E8', card:'#FFFFFF', border:'#C6E8D4', primary:'#0E8840', muted:'#E6F5EB', mutedFg:'#477856', sidebarFg:'#0A2212' },
+    'green-dim':  { bg:'#1E2E22', sidebar:'#18261C', card:'#243428', border:'#2D4035', primary:'#2DA855', muted:'#223224', mutedFg:'#517858', sidebarFg:'#E2F0E4' },
+    'dark-dim':   { bg:'#383838', sidebar:'#303030', card:'#424242', border:'#525252', primary:'#D8D8D8', muted:'#474747', mutedFg:'#999999', sidebarFg:'#EBEBEB' },
+    'brown-dim':  { bg:'#2E2015', sidebar:'#261B10', card:'#362618', border:'#3E2E1E', primary:'#B07840', muted:'#3A281A', mutedFg:'#8A6848', sidebarFg:'#E5CEAC' },
+    'blue-dim':   { bg:'#1E253A', sidebar:'#181E30', card:'#232B42', border:'#2C3652', primary:'#3878CC', muted:'#253038', mutedFg:'#4E6888', sidebarFg:'#E2E8F5' },
     system:       { bg:'#171717', sidebar:'#252525', card:'#171717', border:'#333333', primary:'#F0F0F0', muted:'#333333', mutedFg:'#8A8A8A', sidebarFg:'#F0F0F0' },
 };
 
@@ -35,7 +39,11 @@ const THEMES: { value: Appearance; icon: LucideIcon; label: string; desc: string
     { value: 'azure',       icon: Gem,      label: 'Azure',   desc: 'Fresh & polished'   },
     { value: 'green-dark',  icon: Leaf,     label: 'Forest',  desc: 'Rich & natural'     },
     { value: 'green-light', icon: Sprout,   label: 'Meadow',  desc: 'Fresh & calm'       },
-    { value: 'system',      icon: Monitor,  label: 'System',  desc: 'Follows your OS'    },
+    { value: 'green-dim',   icon: SunDim,    label: 'Dimmed',  desc: 'Soft green night'   },
+    { value: 'dark-dim',    icon: CloudMoon, label: 'Dusk',    desc: 'Soft dark'          },
+    { value: 'brown-dim',   icon: Flame,     label: 'Ember',   desc: 'Warm & dimmed'      },
+    { value: 'blue-dim',    icon: CloudFog,  label: 'Haze',    desc: 'Soft blue night'    },
+    { value: 'system',      icon: Monitor,   label: 'System',  desc: 'Follows your OS'    },
 ];
 
 // ── Mini app preview (sidebar + header + kanban mock) ─────────────────────

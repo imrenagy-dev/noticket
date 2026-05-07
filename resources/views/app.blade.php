@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class([
-    'dark'             => in_array($appearance ?? 'system', ['dark', 'brown', 'blue', 'green-dark']),
+    'dark'             => in_array($appearance ?? 'system', ['dark', 'brown', 'blue', 'green-dark', 'green-dim', 'dark-dim', 'brown-dim', 'blue-dim']),
     'theme-brown'      => ($appearance ?? 'system') === 'brown',
     'theme-blue'       => ($appearance ?? 'system') === 'blue',
     'theme-azure'      => ($appearance ?? 'system') === 'azure',
     'theme-green-dark' => ($appearance ?? 'system') === 'green-dark',
     'theme-green-light'=> ($appearance ?? 'system') === 'green-light',
+    'theme-green-dim'  => ($appearance ?? 'system') === 'green-dim',
+    'theme-dark-dim'   => ($appearance ?? 'system') === 'dark-dim',
+    'theme-brown-dim'  => ($appearance ?? 'system') === 'brown-dim',
+    'theme-blue-dim'   => ($appearance ?? 'system') === 'blue-dim',
 ])>
     <head>
         <meta charset="utf-8">
