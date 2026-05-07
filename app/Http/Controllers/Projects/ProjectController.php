@@ -51,7 +51,7 @@ class ProjectController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return to_route('projects.backlog', [
+        return to_route('projects.board', [
             'current_team' => $current_team->slug,
             'project' => $project->id,
         ]);

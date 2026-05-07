@@ -10,9 +10,10 @@ interface Props {
 }
 
 function ProjectCard({ project, teamSlug }: { project: Project; teamSlug: string }) {
+    const view = localStorage.getItem(`noticket_view_${project.id}`) ?? 'board';
     return (
         <Link
-            href={`/${teamSlug}/projects/${project.id}/backlog`}
+            href={`/${teamSlug}/projects/${project.id}/${view}`}
             className="group flex flex-col gap-3 rounded-xl border border-border bg-card/80 p-5 shadow-sm backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-lg"
         >
             <div className="flex items-start justify-between">

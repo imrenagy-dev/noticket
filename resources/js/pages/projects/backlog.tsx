@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Layers, ListTodo, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { IssueCard } from '@/components/project/issue-card';
 import { IssueModal } from '@/components/project/issue-modal';
@@ -21,6 +21,10 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
 
     const baseUrl = `/${currentTeam.slug}/projects/${project.id}`;
     const hasActiveSprint = sprints.some(s => s.status === 'active');
+
+    useEffect(() => {
+        localStorage.setItem(`noticket_view_${project.id}`, 'backlog');
+    }, [project.id]);
 
     const allSprints: Pick<Sprint, 'id' | 'name' | 'status'>[] = sprints.map(s => ({
         id: s.id,

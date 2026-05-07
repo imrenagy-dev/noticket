@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CheckCircle2, Layers, ListTodo, Zap } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { KanbanBoard } from '@/components/project/kanban-board';
 import type { BoardColumns, IssueUser, Project, Sprint } from '@/types';
@@ -15,6 +16,10 @@ interface Props {
 export default function Board({ project, activeSprint, columns, members, sprints }: Props) {
     const { currentTeam } = usePage().props as { currentTeam: { slug: string } };
     const baseUrl = `/${currentTeam.slug}/projects/${project.id}`;
+
+    useEffect(() => {
+        localStorage.setItem(`noticket_view_${project.id}`, 'board');
+    }, [project.id]);
 
     return (
         <>
