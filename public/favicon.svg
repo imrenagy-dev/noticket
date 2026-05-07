@@ -1,116 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
     <style>
-      /*
-       * Dark mode (default): deep indigo bg, indigo→violet→rose ticket
-       * Light mode: soft lavender bg, richer indigo→violet→crimson ticket
-       *
-       * .d  = dark-mode elements   .l  = light-mode elements
-       * .nt = NT monogram fill     .prf = perforation stroke
-       * .gl = top gloss layer
-       */
-      .d  { display: block }
-      .l  { display: none  }
-      .nt { fill: white;   fill-opacity: .92 }
-      .prf{ stroke: white; stroke-opacity: .42 }
-      .gl { fill-opacity: .06 }
-
+      /* Perforation line adapts to OS dark/light — ticket gradient is always vivid */
+      .prf { stroke: white; stroke-opacity: .45 }
       @media (prefers-color-scheme: light) {
-        .d  { display: none  }
-        .l  { display: block }
-        .nt { fill: #1E1B4B; fill-opacity: .82 }
-        .prf{ stroke: #1E1B4B; stroke-opacity: .28 }
-        .gl { fill-opacity: .22 }
+        .prf { stroke: #1E1B4B; stroke-opacity: .28 }
       }
     </style>
 
-    <!-- Ticket gradient — dark mode: indigo → violet (at divider) → rose -->
-    <linearGradient id="td" x1="0" y1="0" x2="1" y2="0">
+    <!-- Ticket gradient: indigo → violet → rose -->
+    <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%"   stop-color="#6366F1"/>
-      <stop offset="68%"  stop-color="#A855F7"/>
+      <stop offset="62%"  stop-color="#A855F7"/>
       <stop offset="100%" stop-color="#F43F5E"/>
     </linearGradient>
 
-    <!-- Background — dark mode: near-black indigo -->
-    <linearGradient id="bd" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#1C1B35"/>
-      <stop offset="100%" stop-color="#0D0C1E"/>
-    </linearGradient>
-
-    <!-- Ticket gradient — light mode: rich indigo → violet → crimson -->
-    <linearGradient id="tl" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%"   stop-color="#4F46E5"/>
-      <stop offset="68%"  stop-color="#7C3AED"/>
-      <stop offset="100%" stop-color="#9D174D"/>
-    </linearGradient>
-
-    <!-- Background — light mode: soft lavender -->
-    <linearGradient id="bl" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%"   stop-color="#F0F0FF"/>
-      <stop offset="100%" stop-color="#E8E0FF"/>
-    </linearGradient>
-
     <!--
-      Ticket mask: rectangle (28×16) with two semicircle notches
-      cut from the top and bottom edges at the stub divider (x = 21).
-
-      Ticket:  x=2, y=8, w=28, h=16   →  spans (2,8)–(30,24)
-      Divider: x=21  (main body 19 px | stub 9 px)
-      Notch r: 3 px  →  dashed line runs y=11 → y=21
+      Ticket mask — full-bleed rect (30×26) with two semicircle notches.
+      Ticket : x=1  y=3  w=30  h=26   →  (1,3)–(31,29)
+      Divider: x=23   main body 22px | stub 8px
+      Notch r: 5 px
     -->
     <mask id="tm">
-      <rect x="2" y="8" width="28" height="16" rx="2.5" fill="white"/>
-      <circle cx="21" cy="8"  r="3" fill="black"/>
-      <circle cx="21" cy="24" r="3" fill="black"/>
+      <rect x="1" y="3" width="30" height="26" rx="3.5" fill="white"/>
+      <circle cx="23" cy="3"  r="5" fill="black"/>
+      <circle cx="23" cy="29" r="5" fill="black"/>
     </mask>
   </defs>
 
-  <!-- ── Backgrounds ─────────────────────────── -->
-  <rect class="d" width="32" height="32" rx="7" fill="url(#bd)"/>
-  <rect class="l" width="32" height="32" rx="7" fill="url(#bl)"/>
+  <!-- Ticket body — fills nearly the whole canvas -->
+  <rect x="1" y="3" width="30" height="26" rx="3.5" fill="url(#tg)" mask="url(#tm)"/>
 
-  <!-- Top-edge gloss band -->
-  <rect class="gl" width="32" height="13" rx="7" fill="white"/>
-
-  <!-- ── Ticket body ──────────────────────────── -->
-  <rect class="d" x="2" y="8" width="28" height="16" rx="2.5"
-        fill="url(#td)" mask="url(#tm)"/>
-  <rect class="l" x="2" y="8" width="28" height="16" rx="2.5"
-        fill="url(#tl)" mask="url(#tm)"/>
+  <!-- Subtle top-gloss inside the ticket -->
+  <rect x="1" y="3" width="30" height="13" rx="3.5" fill="white" fill-opacity=".08" mask="url(#tm)"/>
 
   <!-- Perforated stub divider -->
-  <line class="prf"
-        x1="21" y1="11" x2="21" y2="21"
-        stroke-width=".75" stroke-dasharray="1.5,1.2" stroke-linecap="round"/>
-
-  <!--
-    NT monogram — pure geometric paths (no fonts).
-
-    Main-body center: ( (2+21)/2, (8+24)/2 ) = (11.5, 16)
-    NT bounding box:  12.5 × 9
-    translate:        (11.5 − 6.25, 16 − 4.5) = (5.25, 11.5)
-
-    N  (local x 0–5.5, h=9, bar=1.6)
-      left bar   : 0,0 → 1.6,9
-      right bar  : 3.9,0 → 5.5,9
-      diagonal   : parallelogram (1.6,0)(3.1,0)(5.5,9)(3.9,9)
-
-    gap 2 px  (x 5.5–7.5)
-
-    T  (local x 7.5–12.5, h=9, bar=1.6)
-      crossbar   : 7.5,0 → 12.5,1.6
-      stem center: (7.5+12.5)/2 = 10  →  9.2,1.6 → 10.8,9
-  -->
-  <g class="nt" transform="translate(5.25,11.5)">
-    <!-- N: left bar -->
-    <rect x="0"   y="0"   width="1.6" height="9"   rx=".5"/>
-    <!-- N: right bar -->
-    <rect x="3.9" y="0"   width="1.6" height="9"   rx=".5"/>
-    <!-- N: diagonal stroke -->
-    <polygon points="1.6,0 3.1,0 5.5,9 3.9,9"/>
-    <!-- T: horizontal crossbar -->
-    <rect x="7.5" y="0"   width="5"   height="1.6" rx=".5"/>
-    <!-- T: vertical stem (centered under crossbar) -->
-    <rect x="9.2" y="1.6" width="1.6" height="7.4" rx=".5"/>
-  </g>
+  <line class="prf" x1="23" y1="8" x2="23" y2="24"
+        stroke-width="1" stroke-dasharray="2,1.5" stroke-linecap="round"/>
 </svg>

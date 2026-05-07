@@ -43,12 +43,17 @@
 
         @php
             $fav = match($appearance ?? 'system') {
-                'light', 'green-light'
-                        => ['ico'=>'/favicons/light.ico','p32'=>'/favicons/light-32.png','svg'=>'/favicons/light.svg','apple'=>'/favicons/light-apple.png'],
-                'brown' => ['ico'=>'/favicons/brown.ico','p32'=>'/favicons/brown-32.png','svg'=>'/favicons/brown.svg','apple'=>'/favicons/brown-apple.png'],
-                'blue'  => ['ico'=>'/favicons/blue.ico', 'p32'=>'/favicons/blue-32.png', 'svg'=>'/favicons/blue.svg', 'apple'=>'/favicons/blue-apple.png'],
-                'azure' => ['ico'=>'/favicons/azure.ico','p32'=>'/favicons/azure-32.png','svg'=>'/favicons/azure.svg','apple'=>'/favicons/azure-apple.png'],
-                default => ['ico'=>'/favicon.ico',       'p32'=>'/favicon-32x32.png',    'svg'=>'/favicon.svg',      'apple'=>'/apple-touch-icon.png'],
+                'light'       => ['ico'=>'/favicons/light.ico',       'p32'=>'/favicons/light-32.png',       'svg'=>'/favicons/light.svg',       'apple'=>'/favicons/light-apple.png'],
+                'brown'       => ['ico'=>'/favicons/brown.ico',       'p32'=>'/favicons/brown-32.png',       'svg'=>'/favicons/brown.svg',       'apple'=>'/favicons/brown-apple.png'],
+                'blue'        => ['ico'=>'/favicons/blue.ico',        'p32'=>'/favicons/blue-32.png',        'svg'=>'/favicons/blue.svg',        'apple'=>'/favicons/blue-apple.png'],
+                'azure'       => ['ico'=>'/favicons/azure.ico',       'p32'=>'/favicons/azure-32.png',       'svg'=>'/favicons/azure.svg',       'apple'=>'/favicons/azure-apple.png'],
+                'green-dark'  => ['ico'=>'/favicons/green-dark.ico',  'p32'=>'/favicons/green-dark-32.png',  'svg'=>'/favicons/green-dark.svg',  'apple'=>'/favicons/green-dark-apple.png'],
+                'green-light' => ['ico'=>'/favicons/green-light.ico', 'p32'=>'/favicons/green-light-32.png', 'svg'=>'/favicons/green-light.svg', 'apple'=>'/favicons/green-light-apple.png'],
+                'green-dim'   => ['ico'=>'/favicons/green-dim.ico',   'p32'=>'/favicons/green-dim-32.png',   'svg'=>'/favicons/green-dim.svg',   'apple'=>'/favicons/green-dim-apple.png'],
+                'dark-dim'    => ['ico'=>'/favicons/dark-dim.ico',    'p32'=>'/favicons/dark-dim-32.png',    'svg'=>'/favicons/dark-dim.svg',    'apple'=>'/favicons/dark-dim-apple.png'],
+                'brown-dim'   => ['ico'=>'/favicons/brown-dim.ico',   'p32'=>'/favicons/brown-dim-32.png',   'svg'=>'/favicons/brown-dim.svg',   'apple'=>'/favicons/brown-dim-apple.png'],
+                'blue-dim'    => ['ico'=>'/favicons/blue-dim.ico',    'p32'=>'/favicons/blue-dim-32.png',    'svg'=>'/favicons/blue-dim.svg',    'apple'=>'/favicons/blue-dim-apple.png'],
+                default       => ['ico'=>'/favicon.ico',              'p32'=>'/favicon-32x32.png',           'svg'=>'/favicon.svg',              'apple'=>'/apple-touch-icon.png'],
             };
         @endphp
         <link data-fav="ico"   rel="icon"             href="{{ $fav['ico'] }}"   sizes="16x16 32x32 48x48">

@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <defs>
     <style>
-      .prf { stroke: #1E1B4B; stroke-opacity: .28 }
-      @media (prefers-color-scheme: dark)  { .prf { stroke: white; stroke-opacity: .45 } }
+      .prf { stroke: white; stroke-opacity: .45 }
+      @media (prefers-color-scheme: light) { .prf { stroke: #1E1B4B; stroke-opacity: .28 } }
     </style>
     <linearGradient id="tg" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%"   stop-color="#2B63C8"/>
-      <stop offset="62%"  stop-color="#3A80E8"/>
-      <stop offset="100%" stop-color="#60A8F8"/>
+      <stop offset="0%"   stop-color="#804020"/>
+      <stop offset="62%"  stop-color="#A06030"/>
+      <stop offset="100%" stop-color="#C08040"/>
     </linearGradient>
     <mask id="tm">
       <rect x="1" y="3" width="30" height="26" rx="3.5" fill="white"/>
