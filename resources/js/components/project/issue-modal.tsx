@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { FormEvent, KeyboardEvent, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -274,12 +274,20 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
                                             />
                                         ) : (
                                             <span
-                                                className={`flex-1 rounded px-1 py-0.5 text-sm hover:bg-accent ${item.done ? 'line-through text-muted-foreground' : 'cursor-text'}`}
-                                                onDoubleClick={() => !item.done && startEdit(item)}
-                                                title={item.done ? undefined : 'Double-click to edit'}
+                                                className={`flex-1 rounded px-1 py-0.5 text-sm ${item.done ? 'line-through text-muted-foreground' : ''}`}
                                             >
                                                 {item.text}
                                             </span>
+                                        )}
+                                        {!item.done && editingId !== item.id && (
+                                            <button
+                                                type="button"
+                                                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                                                onClick={() => startEdit(item)}
+                                                aria-label="Edit item"
+                                            >
+                                                <Pencil className="size-3.5" />
+                                            </button>
                                         )}
                                         <button
                                             type="button"

@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -98,11 +98,18 @@ export function IssueChecklist({ items, onChange }: Props) {
                             <label
                                 htmlFor={`checklist-${item.id}`}
                                 className={`flex-1 cursor-pointer rounded px-1 py-0.5 text-sm hover:bg-accent ${item.done ? 'text-muted-foreground line-through' : ''}`}
-                                onDoubleClick={() => !item.done && startEdit(item)}
-                                title={item.done ? undefined : 'Double-click to edit'}
                             >
                                 {item.text}
                             </label>
+                        )}
+                        {!item.done && editingId !== item.id && (
+                            <button
+                                className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-foreground"
+                                onClick={() => startEdit(item)}
+                                aria-label="Edit item"
+                            >
+                                <Pencil className="size-3.5" />
+                            </button>
                         )}
                         <button
                             className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-destructive"

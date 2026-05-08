@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckSquare, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckSquare, Clock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { IssueChecklist } from '@/components/project/issue-checklist';
 import { IssueTypeIcon } from '@/components/project/issue-type-icon';
 import { PriorityIcon, priorityLabel } from '@/components/project/priority-icon';
-import type { ChecklistItem, Comment, IssueDetail, IssueUser, Project, Sprint } from '@/types';
+import type { ChecklistItem, Comment, IssueDetail, IssueHistory, IssueUser, Project, Sprint } from '@/types';
 
 interface Props {
     project: Project;
@@ -130,6 +130,105 @@ function CommentItem({ comment, currentUserId, issueUrl }: {
                     <p className="whitespace-pre-wrap text-sm">{comment.content}</p>
                 )}
             </div>
+        </div>
+    );
+}
+
+const FIELD_LABELS: Record<string, string> = {
+    title: 'title', type: 'type', priority: 'priority', status: 'status',
+    story_points: 'story points', assignee: 'assignee', sprint: 'sprint',
+};
+
+function historyActionText(h: IssueHistory): string {
+    if (h.action === 'created') return 'created this issue';
+    if (h.action === 'deleted') return 'deleted this issue';
+    if (h.field === 'description') return 'updated the description';
+    if (h.field === 'checklist') return 'updated the checklist';
+    return `changed ${FIELD_LABELS[h.field ?? ''] ?? h.field}`;
+}
+
+function wordDiffExcerpt(a: string, b: string, context = 4): string {
+    const wa = a.split(/\s+/);
+    const wb = b.split(/\s+/);
+    let lo = 0;
+    while (lo < wa.length && lo < wb.length && wa[lo] === wb[lo]) lo++;
+    let hi_a = wa.length - 1, hi_b = wb.length - 1;
+    while (hi_a > lo && hi_b > lo && wa[hi_a] === wb[hi_b]) { hi_a--; hi_b--; }
+    const start = Math.max(0, lo - context);
+    const end_a = Math.min(wa.length - 1, hi_a + context);
+    const prefix = start > 0 ? '…' : '';
+    const suffix = end_a < wa.length - 1 ? '…' : '';
+    return prefix + wa.slice(start, end_a + 1).join(' ') + suffix;
+}
+
+const LONG = 50;
+
+function displayValue(val: string | null, other: string | null): string {
+    if (!val) return '—';
+    if (val.length <= LONG) return val;
+    if (other) return wordDiffExcerpt(val, other);
+    return val.slice(0, LONG).trimEnd() + '…';
+}
+
+function HistoryFeed({ histories }: { histories: IssueHistory[] }) {
+    const [open, setOpen] = useState(false);
+    if (histories.length === 0) return null;
+    return (
+        <div>
+            <button
+                type="button"
+                className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-foreground"
+                onClick={() => setOpen(v => !v)}
+            >
+                <Clock className="size-3.5" />
+                History
+                <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
+                    {histories.length}
+                </span>
+                <span className="ml-auto text-xs font-normal">{open ? '▲' : '▼'}</span>
+            </button>
+            {open && (
+                <ul className="mt-3 space-y-3">
+                    {histories.map((h) => {
+                        const hasValues = h.old_value !== null || h.new_value !== null;
+                        const oldDisplay = h.old_value !== null ? displayValue(h.old_value, h.new_value) : null;
+                        const newDisplay = h.new_value !== null ? displayValue(h.new_value, h.old_value) : null;
+                        return (
+                            <li key={h.id} className="flex items-start gap-2 text-sm">
+                                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground">
+                                    {h.user.name.slice(0, 1).toUpperCase()}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <div>
+                                        <span className="font-medium">{h.user.name}</span>
+                                        <span className="text-muted-foreground"> {historyActionText(h)}</span>
+                                        <span className="ml-2 text-xs text-muted-foreground/70">
+                                            {new Date(h.created_at).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    {hasValues && (
+                                        <div className="mt-0.5 flex flex-wrap items-center gap-1 text-xs">
+                                            {oldDisplay !== null && (
+                                                <span className="rounded bg-red-500/10 px-1.5 py-0.5 text-red-600 line-through dark:text-red-400">
+                                                    {oldDisplay}
+                                                </span>
+                                            )}
+                                            {oldDisplay !== null && newDisplay !== null && (
+                                                <span className="text-muted-foreground">→</span>
+                                            )}
+                                            {newDisplay !== null && (
+                                                <span className="rounded bg-green-500/10 px-1.5 py-0.5 text-green-700 dark:text-green-400">
+                                                    {newDisplay}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
         </div>
     );
 }
@@ -291,6 +390,8 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
                                 )}
                             </div>
 
+                            <HistoryFeed histories={issue.histories} />
+
                             <div>
                                 <p className="mb-3 text-sm font-semibold">
                                     Comments ({issue.comments.length})
@@ -441,10 +542,22 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
 
                                 <Separator />
 
-                                <div className="space-y-1 text-xs text-muted-foreground">
+                                <div className="group/meta space-y-1 text-xs text-muted-foreground">
                                     <p>Reporter: <span className="text-foreground">{issue.reporter?.name ?? '—'}</span></p>
-                                    <p>Created: <span className="text-foreground">{new Date(issue.created_at).toLocaleDateString()}</span></p>
-                                    <p>Updated: <span className="text-foreground">{new Date(issue.updated_at).toLocaleDateString()}</span></p>
+                                    <p>
+                                        Created:{' '}
+                                        <span className="text-foreground">{new Date(issue.created_at).toLocaleDateString()}</span>
+                                        <span className="text-foreground/0 transition-colors duration-150 group-hover/meta:text-foreground">
+                                            {' '}{new Date(issue.created_at).toLocaleTimeString()}
+                                        </span>
+                                    </p>
+                                    <p>
+                                        Updated:{' '}
+                                        <span className="text-foreground">{new Date(issue.updated_at).toLocaleDateString()}</span>
+                                        <span className="text-foreground/0 transition-colors duration-150 group-hover/meta:text-foreground">
+                                            {' '}{new Date(issue.updated_at).toLocaleTimeString()}
+                                        </span>
+                                    </p>
                                 </div>
                             </div>
                         </div>

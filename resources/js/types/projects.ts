@@ -65,9 +65,20 @@ export type Comment = {
     updated_at: string;
 };
 
+export type IssueHistory = {
+    id: number;
+    user: IssueUser;
+    action: 'created' | 'updated' | 'deleted';
+    field: string | null;
+    old_value: string | null;
+    new_value: string | null;
+    created_at: string;
+};
+
 export type IssueDetail = Issue & {
     checklist: ChecklistItem[];
     comments: Comment[];
+    histories: IssueHistory[];
 };
 
 export type BoardColumns = {

@@ -67,6 +67,11 @@ class Issue extends Model
         return $this->hasMany(Comment::class)->latest();
     }
 
+    public function histories(): HasMany
+    {
+        return $this->hasMany(IssueHistory::class)->latest('created_at');
+    }
+
     protected function casts(): array
     {
         return [

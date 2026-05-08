@@ -1,5 +1,77 @@
 # Release Notes
 
+## v0.6.0 — No Ticket
+
+**Branch:** `claude-vibe`
+**Date:** 2026-05-08
+
+---
+
+### Overview
+
+Issue activity history with field-level diffing, smart checklist change tracking, and UI polish on the issue detail page.
+
+---
+
+### New Features
+
+#### Issue History
+- Every issue now has a full activity log tracking `created`, `updated`, and `deleted` events
+- Stored in a new `issue_histories` table: `issue_id`, `user_id`, `action`, `field`, `old_value`, `new_value`, `created_at`
+- **Created** — recorded on `store`, no values
+- **Updated** — one entry per changed field; human-readable labels stored at write time (enum labels, user/sprint names resolved immediately)
+- **Deleted** — recorded before soft-delete
+- Displayed as a collapsible **History** section on the issue detail page (collapsed by default, shows entry count in badge)
+- Each entry shows: user avatar initial, user name, action sentence, timestamp
+- Changed values shown as **red pill (old) → green pill (new)**; pills only rendered when the value is non-null — no pill shown for the absent side
+
+#### Field-Level Diff Display
+- Short values shown in full; values over 50 chars run through a word-level diff that finds the first/last differing word and shows only that region ± 4 words of context with `…` markers
+- Enum fields (status, type, priority) stored as human-readable labels — e.g. `"To Do" → "In Progress"`
+- Assignee and sprint stored by name at write time, not by ID
+
+#### Smart Checklist History
+- Checklist patches are diffed item-by-item to detect the exact operation:
+  - **Added** — only green pill shown with the new item text
+  - **Removed** — only red strikethrough pill shown with the removed item text
+  - **Checked** — red `"☐ text"` → green `"☑ text"`
+  - **Unchecked** — red `"☑ text"` → green `"☐ text"`
+  - **Renamed** — red old text → green new text
+  - **Multiple changes** — falls back to summary: `"3 items (1 done)"` → `"4 items (2 done)"`
+
+#### Checklist Edit via Pencil Icon
+- Double-click to edit replaced with an explicit **Pencil icon** that appears on hover
+- Applied in both `IssueChecklist` (issue detail page) and the inline checklist in `IssueModal`
+- Icon hidden when item is done or already in edit mode
+
+#### Created / Updated Timestamps on Hover
+- Issue detail sidebar always shows the **date** for Created and Updated
+- **Time** fades in when hovering over the meta block — no layout shift (text rendered transparent, transitions to visible)
+
+---
+
+### Database Changes
+
+- New migration: `2026_05_08_162608_create_issue_histories_table` — `issue_histories` with foreign keys to `issues` and `users`, cascade delete, no `updated_at`
+
+---
+
+### Changed Files
+
+**Backend**
+- `database/migrations/2026_05_08_162608_create_issue_histories_table.php` — new
+- `app/Models/IssueHistory.php` — new (`$timestamps = false`, `created_at` cast, relations to `Issue` and `User`)
+- `app/Models/Issue.php` — added `histories()` HasMany relation
+- `app/Http/Controllers/Issues/IssueController.php` — history recording in `store`, `update`, `destroy`; `buildUpdateHistories` field diff; `checklistDiff` + `checklistSummary` helpers; `histories` loaded and mapped in `show`
+
+**Frontend**
+- `resources/js/types/projects.ts` — added `IssueHistory` type; added `histories` to `IssueDetail`
+- `resources/js/pages/projects/issue.tsx` — `HistoryFeed` component (collapsible, old→new pills, conditional pill rendering); `historyActionText`, `displayValue`, `wordDiffExcerpt` helpers; created/updated timestamps with hover-reveal time
+- `resources/js/components/project/issue-checklist.tsx` — pencil icon edit trigger; removed double-click
+- `resources/js/components/project/issue-modal.tsx` — pencil icon edit trigger; removed double-click
+
+---
+
 ## v0.5.0 — No Ticket
 
 **Branch:** `claude-vibe`
