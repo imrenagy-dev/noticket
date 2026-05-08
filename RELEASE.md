@@ -1,5 +1,122 @@
 # Release Notes
 
+## v0.5.0 — No Ticket
+
+**Branch:** `claude-vibe`
+**Date:** 2026-05-08
+
+---
+
+### Overview
+
+Themes expanded with Green and Dimmed variants, dynamic per-theme favicons, a full visual redesign of all inner pages, smart board/backlog navigation memory, and UX improvements to issue creation — including a checklist builder, "Assign to me" shortcut, and a responsive bottom-sheet modal on mobile.
+
+---
+
+### New Features
+
+#### Green & Dimmed Themes
+- Added **Green Light**, **Green Dark**, **Green Dim** — full CSS variable sets with green-tinted palettes
+- Added **Brown Dim**, **Blue Dim**, **Dark Dim** — lower-contrast dimmed variants of existing dark themes
+- `Appearance` type extended with `'green-light' | 'green-dark' | 'green-dim' | 'brown-dim' | 'blue-dim' | 'dark-dim'`
+- Appearance settings page updated with new theme tabs and icons
+- All new themes get matching favicon sets
+
+#### Dynamic Per-Theme Favicons
+- Favicon switches automatically when the user changes their theme
+- `use-appearance.tsx` now calls `updateFavicon(theme)` after applying a theme class
+- Each theme has its own `.svg`, `.ico`, `.png` (32px), and Apple touch icon asset
+- New theme assets: `brown`, `blue`, `azure`, `light`, `green-light`, `green-dark`, `green-dim`, `brown-dim`, `blue-dim`, `dark-dim`, `dark-dim`
+- `app.blade.php` updated to serve the correct default favicon on first load
+
+#### Inner Page Visual Redesign
+- All inner pages received a major visual pass:
+  - **Dashboard** — gradient orb backgrounds, dot-grid texture, stat card polish
+  - **Projects index** — dot-grid + orb background, card hover effects
+  - **Board** — dot-grid background, sprint info bar refinements
+  - **Backlog** — dot-grid background, sprint section polish
+  - **Issue detail** — full layout rework; two-column sidebar, better typography hierarchy
+  - **Appearance settings** — redesigned theme picker with live preview swatches
+
+#### Project View Memory
+- Projects remember whether each user last visited the **Board** or **Backlog**
+- Stored in `localStorage` as `noticket_view_<projectId>`
+- Project cards on the index page link directly to the remembered view
+- `ProjectController@index` redirects to the stored view instead of always defaulting to board
+
+#### Custom Sidebar Logo
+- Sidebar now shows a custom "No Ticket" SVG icon (ticket with a slash) instead of a generic icon
+- `app-logo-icon.tsx` rewritten with inline SVG; `app-logo.tsx` simplified
+
+#### Create Issue Button on Board
+- "Create Issue" button added to the board page header when an active sprint exists
+- Opens `IssueModal` with `todo` status pre-selected and the active sprint pre-filled
+
+#### "Assign to Me" Shortcut
+- Appears next to the **Assignee** label in the create/edit modal and on the issue detail sidebar
+- Only shown when the current user is a project member and is not already the assignee
+- In the modal: sets the select value; on the issue detail page: fires an immediate `PATCH`
+
+#### Checklist in Create/Edit Modal
+- Checklist builder added to `IssueModal` (create and edit views)
+- Add items by typing and pressing Enter or clicking `+`
+- Toggle done state, delete on hover
+- **Double-click to edit** any unchecked item inline — Enter/blur commits, Escape cancels
+- Checklist is submitted with the issue payload on create and save
+- Backend `store` validation updated to accept `checklist` array (same rules as `update`)
+- New migration: `checklist JSON NULL` added to `issues` table
+
+#### Smart Back Navigation on Issue Page
+- "Back" link on the issue detail page now reads `noticket_view_<projectId>` from localStorage
+- Shows **"Back to Board"** or **"Back to Backlog"** depending on where the user came from
+- Post-delete redirect follows the same logic
+
+#### Responsive Issue Modal
+- `DialogContent` (shared) updated to render as a **bottom sheet on mobile** and a centered modal on `sm+`
+- Mobile: slides up from the bottom, `max-h-[90dvh]` with internal scroll, rounded top corners
+- Desktop: zoom-in animation, `max-h-[90vh]` scroll, all corners rounded
+- Form field grids in `IssueModal` stack to 1 column on mobile (`grid-cols-1 sm:grid-cols-2`)
+
+---
+
+### Bug Fixes
+
+- `crypto.randomUUID()` unavailable on HTTP (Laragon local dev) — replaced with `crypto.randomUUID?.() ?? timestamp+random` fallback in `issue-modal.tsx` and `issue-checklist.tsx`
+
+---
+
+### Database Changes
+
+- New migration: `2026_05_08_add_checklist_to_issues_table` — adds `checklist JSON NULL` after `description`
+
+---
+
+### Changed Files
+
+**Backend**
+- `app/Http/Controllers/Projects/ProjectController.php` — index redirects to remembered view
+- `app/Http/Controllers/Issues/IssueController.php` — `store` now validates `checklist` array
+- `database/migrations/2026_05_08_161058_add_checklist_to_issues_table.php` — new
+
+**Frontend**
+- `resources/css/app.css` — added Green Light/Dark/Dim and Dimmed variant theme CSS variable sets
+- `resources/js/hooks/use-appearance.tsx` — extended `Appearance` type; `updateFavicon` per theme; handles all new variants
+- `resources/js/pages/settings/appearance.tsx` — new theme tabs (Green variants, Dimmed variants)
+- `resources/js/pages/dashboard.tsx` — visual redesign
+- `resources/js/pages/projects/index.tsx` — visual redesign; project card links to remembered view
+- `resources/js/pages/projects/board.tsx` — visual redesign; localStorage view tracking; "Create Issue" button + `IssueModal`
+- `resources/js/pages/projects/backlog.tsx` — visual redesign; localStorage view tracking
+- `resources/js/pages/projects/issue.tsx` — full layout rework; "Assign to me"; smart back navigation; edit checklist items
+- `resources/js/components/app-logo-icon.tsx` — custom "No Ticket" SVG icon
+- `resources/js/components/app-logo.tsx` — simplified
+- `resources/js/components/project/issue-modal.tsx` — checklist builder; "Assign to me"; responsive grids; edit checklist items
+- `resources/js/components/project/issue-checklist.tsx` — double-click inline edit; `crypto.randomUUID` fallback
+- `resources/js/components/ui/dialog.tsx` — responsive bottom sheet on mobile
+- `resources/views/app.blade.php` — per-theme favicon on first load
+- `public/favicons/` — new favicon assets for all themes (SVG, ICO, 32px PNG, Apple touch)
+
+---
+
 ## v0.4.0 — No Ticket
 
 **Branch:** `claude-vibe`

@@ -1,7 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { CheckCircle2, Layers, ListTodo, Zap } from 'lucide-react';
-import { useEffect } from 'react';
+import { CheckCircle2, Layers, ListTodo, Plus, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { IssueModal } from '@/components/project/issue-modal';
 import { KanbanBoard } from '@/components/project/kanban-board';
 import type { BoardColumns, IssueUser, Project, Sprint } from '@/types';
 
@@ -16,6 +17,7 @@ interface Props {
 export default function Board({ project, activeSprint, columns, members, sprints }: Props) {
     const { currentTeam } = usePage().props as { currentTeam: { slug: string } };
     const baseUrl = `/${currentTeam.slug}/projects/${project.id}`;
+    const [creating, setCreating] = useState(false);
 
     useEffect(() => {
         localStorage.setItem(`noticket_view_${project.id}`, 'board');
@@ -61,6 +63,12 @@ export default function Board({ project, activeSprint, columns, members, sprints
                             </Link>
                         </div>
                     </div>
+                    {activeSprint && (
+                        <Button size="sm" onClick={() => setCreating(true)}>
+                            <Plus className="size-4" />
+                            Create Issue
+                        </Button>
+                    )}
                 </div>
 
                 {activeSprint && (
@@ -118,6 +126,16 @@ export default function Board({ project, activeSprint, columns, members, sprints
                     </div>
                 )}
             </div>
+
+            <IssueModal
+                open={creating}
+                onClose={() => setCreating(false)}
+                projectId={project.id}
+                members={members}
+                sprints={sprints}
+                defaultSprintId={activeSprint?.id}
+                defaultStatus="todo"
+            />
         </>
     );
 }

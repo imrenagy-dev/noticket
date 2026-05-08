@@ -141,6 +141,9 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
     };
     const baseUrl = `/${currentTeam.slug}/projects/${project.id}`;
     const issueUrl = `${baseUrl}/issues/${issue.id}`;
+    const lastView = localStorage.getItem(`noticket_view_${project.id}`) ?? 'backlog';
+    const backHref = `${baseUrl}/${lastView}`;
+    const backLabel = lastView === 'board' ? 'Back to Board' : 'Back to Backlog';
 
     const [checklist, setChecklist] = useState<ChecklistItem[]>(issue.checklist ?? []);
     const [checklistVisible, setChecklistVisible] = useState(issue.checklist.length > 0);
@@ -162,7 +165,7 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
     function deleteIssue() {
         if (!confirm('Delete this issue?')) return;
         router.delete(issueUrl, {
-            onSuccess: () => router.visit(`${baseUrl}/backlog`),
+            onSuccess: () => router.visit(backHref),
         });
     }
 
@@ -201,12 +204,12 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
                     {/* Nav row */}
                     <div className="mb-3 flex items-center justify-between">
                         <Link
-                            href={`${baseUrl}/backlog`}
+                            href={backHref}
                             className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                         >
                             <ArrowLeft className="size-4" />
-                            <span className="hidden sm:inline">Back to Backlog</span>
-                            <span className="sm:hidden">Backlog</span>
+                            <span className="hidden sm:inline">{backLabel}</span>
+                            <span className="sm:hidden">{lastView === 'board' ? 'Board' : 'Backlog'}</span>
                         </Link>
                         <Button
                             size="sm"
@@ -374,7 +377,18 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
                                 </div>
 
                                 <div>
-                                    <p className="mb-1 text-xs text-muted-foreground">Assignee</p>
+                                    <div className="mb-1 flex items-center justify-between">
+                                        <p className="text-xs text-muted-foreground">Assignee</p>
+                                        {members.some((m) => m.id === auth.user.id) && issue.assignee?.id !== auth.user.id && (
+                                            <button
+                                                type="button"
+                                                className="text-xs text-muted-foreground hover:text-foreground"
+                                                onClick={() => patchField('assignee_id', auth.user.id)}
+                                            >
+                                                Assign to me
+                                            </button>
+                                        )}
+                                    </div>
                                     <Select
                                         value={issue.assignee?.id?.toString() ?? 'none'}
                                         onValueChange={(v) => patchField('assignee_id', v === 'none' ? null : Number(v))}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +12,8 @@ interface Props {
 
 export function IssueChecklist({ items, onChange }: Props) {
     const [newText, setNewText] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editDraft, setEditDraft] = useState('');
 
     const done = items.filter((i) => i.done).length;
     const progress = items.length ? Math.round((done / items.length) * 100) : 0;
@@ -27,8 +29,26 @@ export function IssueChecklist({ items, onChange }: Props) {
     function add() {
         const text = newText.trim();
         if (!text) return;
-        onChange([...items, { id: crypto.randomUUID(), text, done: false }]);
+        const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        onChange([...items, { id, text, done: false }]);
         setNewText('');
+    }
+
+    function startEdit(item: ChecklistItem) {
+        setEditingId(item.id);
+        setEditDraft(item.text);
+    }
+
+    function commitEdit(id: string) {
+        const text = editDraft.trim();
+        if (text && text !== items.find((i) => i.id === id)?.text) {
+            onChange(items.map((i) => (i.id === id ? { ...i, text } : i)));
+        }
+        setEditingId(null);
+    }
+
+    function cancelEdit() {
+        setEditingId(null);
     }
 
     return (
@@ -60,15 +80,32 @@ export function IssueChecklist({ items, onChange }: Props) {
                             id={`checklist-${item.id}`}
                             checked={item.done}
                             onCheckedChange={() => toggle(item.id)}
+                            className="shrink-0"
                         />
-                        <label
-                            htmlFor={`checklist-${item.id}`}
-                            className={`flex-1 cursor-pointer text-sm ${item.done ? 'text-muted-foreground line-through' : ''}`}
-                        >
-                            {item.text}
-                        </label>
+                        {editingId === item.id ? (
+                            <Input
+                                autoFocus
+                                value={editDraft}
+                                onChange={(e) => setEditDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') commitEdit(item.id);
+                                    if (e.key === 'Escape') cancelEdit();
+                                }}
+                                onBlur={() => commitEdit(item.id)}
+                                className="h-7 flex-1 text-sm"
+                            />
+                        ) : (
+                            <label
+                                htmlFor={`checklist-${item.id}`}
+                                className={`flex-1 cursor-pointer rounded px-1 py-0.5 text-sm hover:bg-accent ${item.done ? 'text-muted-foreground line-through' : ''}`}
+                                onDoubleClick={() => !item.done && startEdit(item)}
+                                title={item.done ? undefined : 'Double-click to edit'}
+                            >
+                                {item.text}
+                            </label>
+                        )}
                         <button
-                            className="opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                            className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                             onClick={() => remove(item.id)}
                             aria-label="Remove item"
                         >

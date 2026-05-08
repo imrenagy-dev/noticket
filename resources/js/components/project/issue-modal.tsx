@@ -1,11 +1,13 @@
 import { router, usePage } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
+import { FormEvent, KeyboardEvent, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Issue, IssueUser, Sprint } from '@/types';
+import type { ChecklistItem, Issue, IssueUser, Sprint } from '@/types';
 
 interface Props {
     open: boolean;
@@ -19,7 +21,8 @@ interface Props {
 }
 
 export function IssueModal({ open, onClose, projectId, members, sprints, defaultSprintId, defaultStatus, issue }: Props) {
-    const { currentTeam } = usePage().props as { currentTeam: { slug: string } };
+    const { currentTeam, auth } = usePage().props as { currentTeam: { slug: string }; auth: { user: { id: number } } };
+    const me = members.find((m) => m.id === auth.user.id);
     const isEdit = !!issue;
     const baseUrl = `/${currentTeam.slug}/projects/${projectId}`;
 
@@ -35,8 +38,45 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
     });
 
     const [form, setForm] = useState(makeEmpty);
+    const [checklist, setChecklist] = useState<ChecklistItem[]>((issue as any)?.checklist ?? []);
+    const [newItemText, setNewItemText] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editDraft, setEditDraft] = useState('');
+    const newItemRef = useRef<HTMLInputElement>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
+
+    function addItem() {
+        const text = newItemText.trim();
+        if (!text) return;
+        const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        setChecklist(prev => [...prev, { id, text, done: false }]);
+        setNewItemText('');
+        newItemRef.current?.focus();
+    }
+
+    function toggleItem(id: string) {
+        setChecklist(prev => prev.map(i => i.id === id ? { ...i, done: !i.done } : i));
+    }
+
+    function removeItem(id: string) {
+        setChecklist(prev => prev.filter(i => i.id !== id));
+    }
+
+    function startEdit(item: ChecklistItem) {
+        setEditingId(item.id);
+        setEditDraft(item.text);
+    }
+
+    function commitEdit(id: string) {
+        const text = editDraft.trim();
+        if (text) setChecklist(prev => prev.map(i => i.id === id ? { ...i, text } : i));
+        setEditingId(null);
+    }
+
+    function handleNewItemKey(e: KeyboardEvent<HTMLInputElement>) {
+        if (e.key === 'Enter') { e.preventDefault(); addItem(); }
+    }
 
     function set(field: string, value: string) {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -44,6 +84,9 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
 
     function reset() {
         setForm(makeEmpty());
+        setChecklist((issue as any)?.checklist ?? []);
+        setNewItemText('');
+        setEditingId(null);
         setErrors({});
     }
 
@@ -60,6 +103,7 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
             priority: form.priority,
             status: form.status,
             description: form.description || null,
+            checklist: checklist.length ? checklist : null,
             assignee_id: form.assignee_id ? Number(form.assignee_id) : null,
             sprint_id: form.sprint_id ? Number(form.sprint_id) : null,
             story_points: form.story_points ? Number(form.story_points) : null,
@@ -82,7 +126,7 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
 
     return (
         <Dialog open={open} onOpenChange={(v) => { if (!v) close(); }}>
-            <DialogContent className="max-w-lg">
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{isEdit ? 'Edit Issue' : 'Create Issue'}</DialogTitle>
                 </DialogHeader>
@@ -99,7 +143,7 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
                         {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label>Type</Label>
                             <Select value={form.type} onValueChange={(v) => set('type', v)}>
@@ -129,7 +173,7 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label>Status</Label>
                             <Select value={form.status} onValueChange={(v) => set('status', v)}>
@@ -157,7 +201,18 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label>Assignee</Label>
+                        <div className="flex items-center justify-between">
+                            <Label>Assignee</Label>
+                            {me && form.assignee_id !== String(me.id) && (
+                                <button
+                                    type="button"
+                                    className="text-xs text-muted-foreground hover:text-foreground"
+                                    onClick={() => set('assignee_id', String(me.id))}
+                                >
+                                    Assign to me
+                                </button>
+                            )}
+                        </div>
                         <Select value={form.assignee_id || 'none'} onValueChange={(v) => set('assignee_id', v === 'none' ? '' : v)}>
                             <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
                             <SelectContent>
@@ -192,6 +247,64 @@ export function IssueModal({ open, onClose, projectId, members, sprints, default
                             onChange={(e) => set('description', e.target.value)}
                             placeholder="Add a description..."
                         />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Checklist</Label>
+                        {checklist.length > 0 && (
+                            <ul className="space-y-1">
+                                {checklist.map((item) => (
+                                    <li key={item.id} className="group flex items-center gap-2">
+                                        <Checkbox
+                                            checked={item.done}
+                                            onCheckedChange={() => toggleItem(item.id)}
+                                            className="shrink-0"
+                                        />
+                                        {editingId === item.id ? (
+                                            <Input
+                                                autoFocus
+                                                value={editDraft}
+                                                onChange={(e) => setEditDraft(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') { e.preventDefault(); commitEdit(item.id); }
+                                                    if (e.key === 'Escape') setEditingId(null);
+                                                }}
+                                                onBlur={() => commitEdit(item.id)}
+                                                className="h-7 flex-1 text-sm"
+                                            />
+                                        ) : (
+                                            <span
+                                                className={`flex-1 rounded px-1 py-0.5 text-sm hover:bg-accent ${item.done ? 'line-through text-muted-foreground' : 'cursor-text'}`}
+                                                onDoubleClick={() => !item.done && startEdit(item)}
+                                                title={item.done ? undefined : 'Double-click to edit'}
+                                            >
+                                                {item.text}
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                                            onClick={() => removeItem(item.id)}
+                                        >
+                                            <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <div className="flex items-center gap-2">
+                            <Input
+                                ref={newItemRef}
+                                value={newItemText}
+                                onChange={(e) => setNewItemText(e.target.value)}
+                                onKeyDown={handleNewItemKey}
+                                placeholder="Add an item..."
+                                className="h-8 text-sm"
+                            />
+                            <Button type="button" size="sm" variant="outline" className="shrink-0 px-2" onClick={addItem}>
+                                <Plus className="size-3.5" />
+                            </Button>
+                        </div>
                     </div>
 
                     <DialogFooter>
