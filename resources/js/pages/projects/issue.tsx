@@ -40,7 +40,7 @@ function EditableText({ value, onSave, multiline = false }: {
     if (!editing) {
         return (
             <div
-                className="cursor-text rounded px-1 py-0.5 hover:bg-accent"
+                className={`cursor-text rounded px-1 py-0.5 hover:bg-accent${multiline ? ' whitespace-pre-wrap' : ''}`}
                 onClick={() => { setDraft(value); setEditing(true); }}
             >
                 {value || <span className="italic text-muted-foreground">Click to edit</span>}
