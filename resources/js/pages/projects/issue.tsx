@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CheckSquare, Clock, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, CheckSquare, Clock, Copy, GitBranch, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -233,6 +233,15 @@ function HistoryFeed({ histories }: { histories: IssueHistory[] }) {
     );
 }
 
+function makeBranchName(issueKey: string, title: string): string {
+    const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50);
+    return `${issueKey.toLowerCase()}-${slug}`;
+}
+
 export default function IssuePage({ project, issue, members, sprints }: Props) {
     const { currentTeam, auth } = usePage().props as {
         currentTeam: { slug: string };
@@ -243,6 +252,28 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
     const lastView = localStorage.getItem(`noticket_view_${project.id}`) ?? 'backlog';
     const backHref = `${baseUrl}/${lastView}`;
     const backLabel = lastView === 'board' ? 'Back to Board' : 'Back to Backlog';
+
+    const [copied, setCopied] = useState(false);
+    const branch = makeBranchName(issue.issue_key, issue.title);
+
+    function copyBranch() {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(branch).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            });
+        } else {
+            const el = document.createElement('textarea');
+            el.value = branch;
+            el.style.cssText = 'position:fixed;opacity:0';
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    }
 
     const [checklist, setChecklist] = useState<ChecklistItem[]>(issue.checklist ?? []);
     const [checklistVisible, setChecklistVisible] = useState(issue.checklist.length > 0);
@@ -538,6 +569,24 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
                                             if (v !== issue.story_points) patchField('story_points', v);
                                         }}
                                     />
+                                </div>
+
+                                <div>
+                                    <p className="mb-1 text-xs text-muted-foreground">Git Branch</p>
+                                    <div className="flex items-center gap-1.5 rounded-md border border-input bg-muted/30 px-2 py-1.5">
+                                        <GitBranch className="size-3 shrink-0 text-muted-foreground" />
+                                        <span className="min-w-0 flex-1 truncate font-mono text-xs">{branch}</span>
+                                        <button
+                                            type="button"
+                                            onClick={copyBranch}
+                                            className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                                            title="Copy branch name"
+                                        >
+                                            {copied
+                                                ? <Check className="size-3.5 text-green-500" />
+                                                : <Copy className="size-3.5" />}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <Separator />
