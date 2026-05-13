@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Copy, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,10 @@ import type { ChecklistItem } from '@/types/projects';
 interface Props {
     items: ChecklistItem[];
     onChange: (items: ChecklistItem[]) => void;
+    onCopyTo?: () => void;
 }
 
-export function IssueChecklist({ items, onChange }: Props) {
+export function IssueChecklist({ items, onChange, onCopyTo }: Props) {
     const [newText, setNewText] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editDraft, setEditDraft] = useState('');
@@ -62,6 +63,16 @@ export function IssueChecklist({ items, onChange }: Props) {
                         </span>
                     )}
                 </p>
+                {onCopyTo && items.length > 0 && (
+                    <button
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={onCopyTo}
+                        type="button"
+                    >
+                        <Copy className="size-3" />
+                        Copy to...
+                    </button>
+                )}
             </div>
 
             {items.length > 0 && (

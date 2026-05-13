@@ -32,6 +32,7 @@ Route::prefix('{current_team}')
         Route::get('projects/{project}/backlog', [BacklogController::class, 'show'])->name('projects.backlog');
 
         // Issues
+        Route::get('projects/{project}/issues', [IssueController::class, 'index'])->name('issues.index');
         Route::post('projects/{project}/issues', [IssueController::class, 'store'])->name('issues.store');
         Route::get('projects/{project}/issues/{issue}', [IssueController::class, 'show'])->name('issues.show');
         Route::patch('projects/{project}/issues/{issue}', [IssueController::class, 'update'])->name('issues.update');

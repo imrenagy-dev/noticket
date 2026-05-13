@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,6 +21,31 @@ class IssueController extends Controller
     private const STATUS_LABELS   = ['todo' => 'To Do', 'in_progress' => 'In Progress', 'in_review' => 'In Review', 'done' => 'Done'];
     private const TYPE_LABELS     = ['epic' => 'Epic', 'story' => 'Story', 'task' => 'Task', 'bug' => 'Bug', 'subtask' => 'Subtask'];
     private const PRIORITY_LABELS = ['lowest' => 'Lowest', 'low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'highest' => 'Highest'];
+
+    public function index(Request $request, Team $current_team, Project $project): JsonResponse
+    {
+        abort_if($project->team_id !== $current_team->id, 404);
+
+        $q = (string) $request->query('q', '');
+
+        $issues = $project->issues()
+            ->select('id', 'number', 'title', 'checklist')
+            ->when($q, fn ($query) => $query->where(function ($sub) use ($q) {
+                $sub->where('title', 'like', "%{$q}%")
+                    ->orWhere('number', 'like', "%{$q}%");
+            }))
+            ->orderBy('number', 'desc')
+            ->limit(30)
+            ->get()
+            ->map(fn ($issue) => [
+                'id'        => $issue->id,
+                'issue_key' => $project->key . '-' . $issue->number,
+                'title'     => $issue->title,
+                'checklist' => $issue->checklist ?? [],
+            ]);
+
+        return response()->json($issues);
+    }
 
     public function store(Request $request, Team $current_team, Project $project): RedirectResponse
     {

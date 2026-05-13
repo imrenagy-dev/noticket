@@ -1,8 +1,10 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Check, CheckSquare, Clock, Copy, GitBranch, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { IssueChecklist } from '@/components/project/issue-checklist';
@@ -283,6 +285,55 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
         router.patch(issueUrl, { checklist: items }, { preserveScroll: true });
     }
 
+    type CopyIssue = { id: number; issue_key: string; title: string; checklist: ChecklistItem[] };
+    const [copyOpen, setCopyOpen] = useState(false);
+    const [copySearch, setCopySearch] = useState('');
+    const [copyIssues, setCopyIssues] = useState<CopyIssue[]>([]);
+    const [copyTarget, setCopyTarget] = useState<number | null>(null);
+    const [copyLoading, setCopyLoading] = useState(false);
+
+    useEffect(() => {
+        if (!copyOpen) return;
+        const timer = setTimeout(async () => {
+            const url = `${baseUrl}/issues${copySearch ? `?q=${encodeURIComponent(copySearch)}` : ''}`;
+            try {
+                const res = await fetch(url, { headers: { Accept: 'application/json' } });
+                if (res.ok) setCopyIssues(await res.json());
+            } catch {}
+        }, 250);
+        return () => clearTimeout(timer);
+    }, [copySearch, copyOpen]);
+
+    function openCopyDialog() {
+        setCopyOpen(true);
+        setCopySearch('');
+        setCopyTarget(null);
+        setCopyIssues([]);
+    }
+
+    function executeCopy() {
+        if (!copyTarget) return;
+        const target = copyIssues.find((i) => i.id === copyTarget);
+        if (!target) return;
+        setCopyLoading(true);
+        const freshItems: ChecklistItem[] = checklist.map((item) => ({
+            id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            text: item.text,
+            done: false,
+        }));
+        const merged: ChecklistItem[] = [...(target.checklist ?? []), ...freshItems];
+        router.patch(
+            `${baseUrl}/issues/${copyTarget}`,
+            { checklist: merged },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onSuccess: () => setCopyOpen(false),
+                onFinish: () => setCopyLoading(false),
+            },
+        );
+    }
+
     const {
         data: commentData, setData: setCommentData,
         post: postComment, processing: commentProcessing, reset: resetComment,
@@ -407,7 +458,7 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
 
                             <div>
                                 {checklistVisible ? (
-                                    <IssueChecklist items={checklist} onChange={updateChecklist} />
+                                    <IssueChecklist items={checklist} onChange={updateChecklist} onCopyTo={openCopyDialog} />
                                 ) : (
                                     <Button
                                         variant="ghost"
@@ -614,6 +665,57 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={copyOpen} onOpenChange={(o) => !o && setCopyOpen(false)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Copy checklist to issue</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        <Input
+                            autoFocus
+                            placeholder="Search issues..."
+                            value={copySearch}
+                            onChange={(e) => { setCopySearch(e.target.value); setCopyTarget(null); }}
+                        />
+                        <div className="max-h-64 overflow-y-auto rounded-md border border-border">
+                            {copyIssues.length === 0 ? (
+                                <p className="px-3 py-6 text-center text-sm text-muted-foreground">No issues found</p>
+                            ) : (
+                                copyIssues
+                                    .filter((i) => i.id !== issue.id)
+                                    .map((i) => (
+                                        <button
+                                            key={i.id}
+                                            type="button"
+                                            className={`w-full px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent ${copyTarget === i.id ? 'bg-accent' : ''}`}
+                                            onClick={() => setCopyTarget(i.id)}
+                                        >
+                                            <span className="font-mono text-xs text-muted-foreground">{i.issue_key}</span>
+                                            <span className="ml-2">{i.title}</span>
+                                            {i.checklist.length > 0 && (
+                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                    (+{i.checklist.length} existing)
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))
+                            )}
+                        </div>
+                        {copyTarget && (
+                            <p className="text-xs text-muted-foreground">
+                                {checklist.length} item{checklist.length !== 1 ? 's' : ''} will be appended (unchecked).
+                            </p>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setCopyOpen(false)}>Cancel</Button>
+                        <Button onClick={executeCopy} disabled={!copyTarget || copyLoading}>
+                            {copyLoading ? 'Copying...' : 'Copy'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }
