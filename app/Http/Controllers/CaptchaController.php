@@ -2,54 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\CaptchaService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class CaptchaController extends Controller
 {
-    private const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    public function __construct(private CaptchaService $captcha) {}
 
     public function image(Request $request): Response
     {
-        $len  = 6;
-        $text = '';
-        for ($i = 0; $i < $len; $i++) {
-            $text .= self::CHARS[random_int(0, strlen(self::CHARS) - 1)];
-        }
+        $text = $this->captcha->generate();
 
-        $request->session()->put('captcha_answer', strtolower($text));
-
-        // Solid background — must match the rotation fill colour exactly
         $bgR = 243; $bgG = 244; $bgB = 252;
-
         $width  = 210;
         $height = 64;
-        $image  = imagecreatetruecolor($width, $height);
+        $len    = strlen($text);
+
+        $image   = imagecreatetruecolor($width, $height);
         $bgColor = imagecolorallocate($image, $bgR, $bgG, $bgB);
         imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, $bgColor);
 
-        // --- Rotated characters ---
-        // Font-5 glyph is 9 × 15 px; char canvas 28 × 28 gives room to rotate
+        $this->drawCharacters($image, $text, $len, $width, $height, $bgR, $bgG, $bgB);
+        $this->drawInterferenceLines($image, $width, $height);
+
+        imagerectangle($image, 0, 0, $width - 1, $height - 1,
+            imagecolorallocate($image, 190, 190, 210));
+
+        ob_start();
+        imagepng($image);
+        $png = ob_get_clean();
+
+        return response($png, 200, [
+            'Content-Type'  => 'image/png',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Pragma'        => 'no-cache',
+        ]);
+    }
+
+    /** @param \GdImage $image */
+    private function drawCharacters($image, string $text, int $len, int $width, int $height, int $bgR, int $bgG, int $bgB): void
+    {
+        // Font-5 glyph is 9 × 15 px; 28 × 28 canvas gives room to rotate
         $slotW = (int)(($width - 20) / $len);
+
         for ($i = 0; $i < $len; $i++) {
-            $cw = 28; $ch = 28;
-            $charImg  = imagecreatetruecolor($cw, $ch);
-            $charBgC  = imagecolorallocate($charImg, $bgR, $bgG, $bgB);
-            imagefilledrectangle($charImg, 0, 0, $cw - 1, $ch - 1, $charBgC);
+            $charImg = imagecreatetruecolor(28, 28);
+            $charBg  = imagecolorallocate($charImg, $bgR, $bgG, $bgB);
+            imagefilledrectangle($charImg, 0, 0, 27, 27, $charBg);
 
-            $r = random_int(15, 55);
-            $g = random_int(15, 45);
-            $b = random_int(100, 175);
-            imagestring($charImg, 5, 9, 6, $text[$i],
-                imagecolorallocate($charImg, $r, $g, $b));
+            imagestring($charImg, 5, 9, 6, $text[$i], imagecolorallocate($charImg,
+                random_int(15, 55),
+                random_int(15, 45),
+                random_int(100, 175),
+            ));
 
-            $angle   = random_int(-22, 22);
-            $rotated = imagerotate($charImg, $angle, $charBgC);
-
+            $rotated = imagerotate($charImg, random_int(-22, 22), $charBg);
             $rw = imagesx($rotated);
             $rh = imagesy($rotated);
 
-            // Centre of this character's slot
             $cx = 10 + $i * $slotW + (int)($slotW / 2);
             $cy = (int)($height / 2);
 
@@ -58,9 +69,11 @@ class CaptchaController extends Controller
                 $cy - (int)($rh / 2),
                 0, 0, $rw, $rh);
         }
+    }
 
-        // --- Wavy interference lines drawn OVER the characters ---
-        // Light enough for humans to see through; breaks edge-detection for bots
+    /** @param \GdImage $image */
+    private function drawInterferenceLines($image, int $width, int $height): void
+    {
         for ($i = 0; $i < 3; $i++) {
             $baseY = random_int(10, $height - 10);
             $amp   = random_int(4, 8);
@@ -79,19 +92,5 @@ class CaptchaController extends Controller
                 $py = $ny;
             }
         }
-
-        // Subtle border
-        imagerectangle($image, 0, 0, $width - 1, $height - 1,
-            imagecolorallocate($image, 190, 190, 210));
-
-        ob_start();
-        imagepng($image);
-        $png = ob_get_clean();
-
-        return response($png, 200, [
-            'Content-Type'  => 'image/png',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate',
-            'Pragma'        => 'no-cache',
-        ]);
     }
 }

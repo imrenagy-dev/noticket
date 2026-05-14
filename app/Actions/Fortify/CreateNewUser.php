@@ -6,6 +6,7 @@ use App\Actions\Teams\CreateTeam;
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\User;
+use App\Services\CaptchaService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -15,10 +16,10 @@ class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules, ProfileValidationRules;
 
-    public function __construct(private CreateTeam $createTeam)
-    {
-        //
-    }
+    public function __construct(
+        private CreateTeam $createTeam,
+        private CaptchaService $captcha,
+    ) {}
 
     /**
      * Validate and create a newly registered user.
@@ -27,8 +28,7 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        $expected = session('captcha_answer');
-        if (! $expected || strtolower(trim($input['captcha'] ?? '')) !== $expected) {
+        if (! $this->captcha->verify($input['captcha'] ?? '')) {
             throw ValidationException::withMessages([
                 'captcha' => ['The verification code is incorrect.'],
             ]);
@@ -40,7 +40,7 @@ class CreateNewUser implements CreatesNewUsers
             'captcha'  => ['required', 'string'],
         ])->validate();
 
-        session()->forget('captcha_answer');
+        $this->captcha->consume();
 
         return DB::transaction(function () use ($input) {
             $user = User::create([
