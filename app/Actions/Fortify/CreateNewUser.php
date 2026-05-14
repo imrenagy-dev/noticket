@@ -8,6 +8,7 @@ use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -26,10 +27,20 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        $expected = session('captcha_answer');
+        if (! $expected || strtolower(trim($input['captcha'] ?? '')) !== $expected) {
+            throw ValidationException::withMessages([
+                'captcha' => ['The verification code is incorrect.'],
+            ]);
+        }
+
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+            'captcha'  => ['required', 'string'],
         ])->validate();
+
+        session()->forget('captcha_answer');
 
         return DB::transaction(function () use ($input) {
             $user = User::create([
