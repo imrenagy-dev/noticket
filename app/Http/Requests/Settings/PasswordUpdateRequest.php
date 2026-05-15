@@ -2,14 +2,12 @@
 
 namespace App\Http\Requests\Settings;
 
-use App\Concerns\PasswordValidationRules;
+use App\Support\PasswordRules;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PasswordUpdateRequest extends FormRequest
 {
-    use PasswordValidationRules;
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -18,8 +16,8 @@ class PasswordUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'current_password' => $this->currentPasswordRules(),
-            'password' => $this->passwordRules(),
+            'current_password' => PasswordRules::currentPassword(),
+            'password'         => PasswordRules::password(),
         ];
     }
 }

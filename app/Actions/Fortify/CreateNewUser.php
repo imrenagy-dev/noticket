@@ -3,10 +3,10 @@
 namespace App\Actions\Fortify;
 
 use App\Actions\Teams\CreateTeam;
-use App\Concerns\PasswordValidationRules;
-use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use App\Services\CaptchaService;
+use App\Support\PasswordRules;
+use App\Support\ProfileRules;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -14,8 +14,6 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
 {
-    use PasswordValidationRules, ProfileValidationRules;
-
     public function __construct(
         private CreateTeam $createTeam,
         private CaptchaService $captcha,
@@ -35,8 +33,8 @@ class CreateNewUser implements CreatesNewUsers
         }
 
         Validator::make($input, [
-            ...$this->profileRules(),
-            'password' => $this->passwordRules(),
+            ...ProfileRules::profile(),
+            'password' => PasswordRules::password(),
             'captcha'  => ['required', 'string'],
         ])->validate();
 

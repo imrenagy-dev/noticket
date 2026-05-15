@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Teams;
 
+use App\Actions\Teams\AcceptTeamInvitation;
 use App\Enums\TeamRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Teams\AcceptTeamInvitationRequest;
@@ -10,7 +11,6 @@ use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Notifications\Teams\TeamInvitation as TeamInvitationNotification;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
@@ -58,24 +58,9 @@ class TeamInvitationController extends Controller
     /**
      * Accept the invitation.
      */
-    public function accept(AcceptTeamInvitationRequest $request, TeamInvitation $invitation): RedirectResponse
+    public function accept(AcceptTeamInvitationRequest $request, TeamInvitation $invitation, AcceptTeamInvitation $action): RedirectResponse
     {
-        $user = $request->user();
-
-        DB::transaction(function () use ($user, $invitation) {
-            $team = $invitation->team;
-
-            $membership = $team->memberships()->firstOrCreate(
-                ['user_id' => $user->id],
-                ['role' => $invitation->role],
-            );
-
-            $wasRecentlyCreated = $membership->wasRecentlyCreated;
-
-            $invitation->update(['accepted_at' => now()]);
-
-            $user->switchTeam($team);
-        });
+        $action->handle($request->user(), $invitation);
 
         return to_route('dashboard');
     }
