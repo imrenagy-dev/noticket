@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Projects;
 
 use App\Http\Controllers\Controller;
-use App\Http\Presenters\ProjectPresenter;
+use App\Contracts\ProjectPresenterContract;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Team;
@@ -12,7 +12,7 @@ use Inertia\Response;
 
 class BoardController extends Controller
 {
-    public function __construct(private ProjectPresenter $presenter) {}
+    public function __construct(private ProjectPresenterContract $presenter) {}
 
     public function show(Team $current_team, Project $project): Response
     {

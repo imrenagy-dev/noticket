@@ -12,7 +12,7 @@ use App\Models\IssueHistory;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Team;
-use App\Services\IssueHistoryService;
+use App\Contracts\IssueHistoryContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +22,7 @@ use Inertia\Response;
 
 class IssueController extends Controller
 {
-    public function __construct(private IssueHistoryService $history) {}
+    public function __construct(private IssueHistoryContract $history) {}
 
     public function index(Request $request, Team $current_team, Project $project): JsonResponse
     {

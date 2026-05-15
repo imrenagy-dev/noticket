@@ -2,12 +2,13 @@
 
 namespace App\Http\Presenters;
 
+use App\Contracts\ProjectPresenterContract;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Team;
 
-class ProjectPresenter
+class ProjectPresenter implements ProjectPresenterContract
 {
     public function project(Project $project): array
     {

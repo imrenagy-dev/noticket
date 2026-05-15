@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CaptchaService;
+use App\Contracts\CaptchaContract;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class CaptchaController extends Controller
 {
-    public function __construct(private CaptchaService $captcha) {}
+    public function __construct(private CaptchaContract $captcha) {}
 
     public function image(Request $request): Response
     {

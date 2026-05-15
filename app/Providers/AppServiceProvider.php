@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Contracts\CaptchaContract;
+use App\Contracts\IssueHistoryContract;
+use App\Contracts\ProjectPresenterContract;
+use App\Http\Presenters\ProjectPresenter;
+use App\Services\CaptchaService;
+use App\Services\IssueHistoryService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(CaptchaContract::class, CaptchaService::class);
+        $this->app->bind(IssueHistoryContract::class, IssueHistoryService::class);
+        $this->app->bind(ProjectPresenterContract::class, ProjectPresenter::class);
     }
 
     /**

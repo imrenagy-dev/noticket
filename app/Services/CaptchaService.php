@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
+use App\Contracts\CaptchaContract;
 use Illuminate\Contracts\Session\Session;
 
-class CaptchaService
+class CaptchaService implements CaptchaContract
 {
     private const SESSION_KEY = 'captcha_answer';
     private const CHARS       = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
