@@ -28,7 +28,9 @@ class BoardController extends Controller
                 ->with(['reporter:id,name', 'assignee:id,name'])
                 ->orderBy('board_order')
                 ->get()
-                ->each(fn ($issue) => $columns[$issue->status][] = $this->presenter->issue($issue, $project->key));
+                ->each(function ($issue) use (&$columns, $project) {
+                    $columns[$issue->status][] = $this->presenter->issue($issue, $project->key);
+                });
         }
 
         return Inertia::render('projects/board', [
