@@ -3,6 +3,7 @@ import { ArrowLeft, Check, CheckSquare, Clock, Copy, GitBranch, Trash2 } from 'l
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -290,7 +291,16 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
     const [copySearch, setCopySearch] = useState('');
     const [copyIssues, setCopyIssues] = useState<CopyIssue[]>([]);
     const [copyTarget, setCopyTarget] = useState<number | null>(null);
+    const [copySelectedIds, setCopySelectedIds] = useState<Set<string>>(new Set());
     const [copyLoading, setCopyLoading] = useState(false);
+
+    function toggleCopyItem(id: string) {
+        setCopySelectedIds((prev) => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    }
 
     useEffect(() => {
         if (!copyOpen) return;
@@ -309,18 +319,21 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
         setCopySearch('');
         setCopyTarget(null);
         setCopyIssues([]);
+        setCopySelectedIds(new Set(checklist.filter((i) => !i.done).map((i) => i.id)));
     }
 
     function executeCopy() {
-        if (!copyTarget) return;
+        if (!copyTarget || copySelectedIds.size === 0) return;
         const target = copyIssues.find((i) => i.id === copyTarget);
         if (!target) return;
         setCopyLoading(true);
-        const freshItems: ChecklistItem[] = checklist.map((item) => ({
-            id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            text: item.text,
-            done: false,
-        }));
+        const freshItems: ChecklistItem[] = checklist
+            .filter((item) => copySelectedIds.has(item.id))
+            .map((item) => ({
+                id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                text: item.text,
+                done: false,
+            }));
         const merged: ChecklistItem[] = [...(target.checklist ?? []), ...freshItems];
         router.patch(
             `${baseUrl}/issues/${copyTarget}`,
@@ -339,8 +352,8 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
         post: postComment, processing: commentProcessing, reset: resetComment,
     } = useForm({ content: '' });
 
-    function patchField(field: string, value: unknown) {
-        router.patch(issueUrl, { [field]: value }, { preserveScroll: true });
+    function patchField(field: string, value: string | number | boolean | null | object) {
+        router.patch(issueUrl, { [field]: value } as Parameters<typeof router.patch>[1], { preserveScroll: true });
     }
 
     function deleteIssue() {
@@ -667,50 +680,74 @@ export default function IssuePage({ project, issue, members, sprints }: Props) {
             </div>
 
             <Dialog open={copyOpen} onOpenChange={(o) => !o && setCopyOpen(false)}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Copy checklist to issue</DialogTitle>
+                        <DialogTitle>Copy checklist items to issue</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-3">
-                        <Input
-                            autoFocus
-                            placeholder="Search issues..."
-                            value={copySearch}
-                            onChange={(e) => { setCopySearch(e.target.value); setCopyTarget(null); }}
-                        />
-                        <div className="max-h-64 overflow-y-auto rounded-md border border-border">
-                            {copyIssues.length === 0 ? (
-                                <p className="px-3 py-6 text-center text-sm text-muted-foreground">No issues found</p>
-                            ) : (
-                                copyIssues
-                                    .filter((i) => i.id !== issue.id)
-                                    .map((i) => (
-                                        <button
-                                            key={i.id}
-                                            type="button"
-                                            className={`w-full px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent ${copyTarget === i.id ? 'bg-accent' : ''}`}
-                                            onClick={() => setCopyTarget(i.id)}
-                                        >
-                                            <span className="font-mono text-xs text-muted-foreground">{i.issue_key}</span>
-                                            <span className="ml-2">{i.title}</span>
-                                            {i.checklist.length > 0 && (
-                                                <span className="ml-2 text-xs text-muted-foreground">
-                                                    (+{i.checklist.length} existing)
-                                                </span>
-                                            )}
-                                        </button>
-                                    ))
-                            )}
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <p className="text-xs font-medium text-muted-foreground">Items to copy</p>
+                            <div className="max-h-44 overflow-y-auto rounded-md border border-border">
+                                {checklist.map((item) => (
+                                    <label
+                                        key={item.id}
+                                        className="flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm hover:bg-accent"
+                                    >
+                                        <Checkbox
+                                            checked={copySelectedIds.has(item.id)}
+                                            onCheckedChange={() => toggleCopyItem(item.id)}
+                                        />
+                                        <span className={item.done ? 'text-muted-foreground line-through' : ''}>
+                                            {item.text}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
+
+                        <div className="space-y-1.5">
+                            <p className="text-xs font-medium text-muted-foreground">Copy to</p>
+                            <Input
+                                autoFocus
+                                placeholder="Search issues..."
+                                value={copySearch}
+                                onChange={(e) => { setCopySearch(e.target.value); setCopyTarget(null); }}
+                            />
+                            <div className="max-h-48 overflow-y-auto rounded-md border border-border">
+                                {copyIssues.length === 0 ? (
+                                    <p className="px-3 py-6 text-center text-sm text-muted-foreground">No issues found</p>
+                                ) : (
+                                    copyIssues
+                                        .filter((i) => i.id !== issue.id)
+                                        .map((i) => (
+                                            <button
+                                                key={i.id}
+                                                type="button"
+                                                className={`w-full px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent ${copyTarget === i.id ? 'bg-accent' : ''}`}
+                                                onClick={() => setCopyTarget(i.id)}
+                                            >
+                                                <span className="font-mono text-xs text-muted-foreground">{i.issue_key}</span>
+                                                <span className="ml-2">{i.title}</span>
+                                                {i.checklist.length > 0 && (
+                                                    <span className="ml-2 text-xs text-muted-foreground">
+                                                        (+{i.checklist.length} existing)
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))
+                                )}
+                            </div>
+                        </div>
+
                         {copyTarget && (
                             <p className="text-xs text-muted-foreground">
-                                {checklist.length} item{checklist.length !== 1 ? 's' : ''} will be appended (unchecked).
+                                {copySelectedIds.size} item{copySelectedIds.size !== 1 ? 's' : ''} will be appended (unchecked).
                             </p>
                         )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setCopyOpen(false)}>Cancel</Button>
-                        <Button onClick={executeCopy} disabled={!copyTarget || copyLoading}>
+                        <Button onClick={executeCopy} disabled={!copyTarget || copySelectedIds.size === 0 || copyLoading}>
                             {copyLoading ? 'Copying...' : 'Copy'}
                         </Button>
                     </DialogFooter>
