@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Contracts\CaptchaContract;
+use App\Contracts\TeamSlugGeneratorContract;
 use App\Contracts\IssueHistoryContract;
 use App\Contracts\ProjectPresenterContract;
 use App\Http\Presenters\ProjectPresenter;
 use App\Services\CaptchaService;
+use App\Support\TeamSlugGenerator;
 use App\Services\IssueHistoryService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CaptchaContract::class, CaptchaService::class);
         $this->app->bind(IssueHistoryContract::class, IssueHistoryService::class);
         $this->app->bind(ProjectPresenterContract::class, ProjectPresenter::class);
+        $this->app->bind(TeamSlugGeneratorContract::class, TeamSlugGenerator::class);
     }
 
     /**

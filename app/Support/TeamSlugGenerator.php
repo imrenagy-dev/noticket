@@ -1,23 +1,21 @@
 <?php
 
-namespace App\Concerns;
+namespace App\Support;
 
+use App\Contracts\TeamSlugGeneratorContract;
 use App\Models\Team;
 use Illuminate\Support\Str;
 
-trait GeneratesUniqueTeamSlugs
+class TeamSlugGenerator implements TeamSlugGeneratorContract
 {
-    /**
-     * Generate a unique slug for the team.
-     */
-    protected static function generateUniqueTeamSlug(string $name, ?int $excludeId = null): string
+    public function generate(string $name, ?int $excludeId = null): string
     {
         $defaultSlug = Str::slug($name);
 
-        $query = static::withTrashed()
+        $query = Team::withTrashed()
             ->where(function ($query) use ($defaultSlug) {
                 $query->where('slug', $defaultSlug)
-                    ->orWhere('slug', 'like', $defaultSlug.'-%');
+                    ->orWhere('slug', 'like', $defaultSlug . '-%');
             });
 
         if ($excludeId) {
@@ -30,7 +28,7 @@ trait GeneratesUniqueTeamSlugs
             ->map(function (string $slug) use ($defaultSlug): ?int {
                 if ($slug === $defaultSlug) {
                     return 0;
-                } elseif (preg_match('/^'.preg_quote($defaultSlug, '/').'-(\d+)$/', $slug, $matches)) {
+                } elseif (preg_match('/^' . preg_quote($defaultSlug, '/') . '-(\d+)$/', $slug, $matches)) {
                     return (int) $matches[1];
                 }
 
@@ -41,6 +39,6 @@ trait GeneratesUniqueTeamSlugs
 
         return $existingSlugs->isEmpty()
             ? $defaultSlug
-            : $defaultSlug.'-'.($maxSuffix + 1);
+            : $defaultSlug . '-' . ($maxSuffix + 1);
     }
 }
