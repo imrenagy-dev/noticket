@@ -1,15 +1,16 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { FolderKanban, Plus, Sparkles } from 'lucide-react';
+import { FolderKanban, Pencil, Plus, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CreateProjectModal } from '@/components/project/create-project-modal';
+import { EditProjectModal } from '@/components/project/edit-project-modal';
 import type { Project } from '@/types';
 
 interface Props {
     projects: Project[];
 }
 
-function ProjectCard({ project, teamSlug }: { project: Project; teamSlug: string }) {
+function ProjectCard({ project, teamSlug, onEdit }: { project: Project; teamSlug: string; onEdit: (p: Project) => void }) {
     const view = localStorage.getItem(`noticket_view_${project.id}`) ?? 'board';
     return (
         <Link
@@ -20,6 +21,14 @@ function ProjectCard({ project, teamSlug }: { project: Project; teamSlug: string
                 <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary ring-1 ring-primary/20 transition-colors group-hover:bg-primary/15">
                     {project.key}
                 </div>
+                <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(project); }}
+                    className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100"
+                    title="Edit project"
+                >
+                    <Pencil className="size-3.5" />
+                </button>
             </div>
             <div>
                 <h3 className="font-semibold transition-colors group-hover:text-primary">{project.name}</h3>
@@ -38,6 +47,7 @@ function ProjectCard({ project, teamSlug }: { project: Project; teamSlug: string
 export default function ProjectsIndex({ projects }: Props) {
     const { currentTeam } = usePage().props as { currentTeam: { slug: string; name: string } };
     const [creating, setCreating] = useState(false);
+    const [editing, setEditing] = useState<Project | null>(null);
 
     return (
         <>
@@ -97,7 +107,7 @@ export default function ProjectsIndex({ projects }: Props) {
                     ) : (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {projects.map((p) => (
-                                <ProjectCard key={p.id} project={p} teamSlug={currentTeam.slug} />
+                                <ProjectCard key={p.id} project={p} teamSlug={currentTeam.slug} onEdit={setEditing} />
                             ))}
                         </div>
                     )}
@@ -105,6 +115,7 @@ export default function ProjectsIndex({ projects }: Props) {
             </div>
 
             <CreateProjectModal open={creating} onClose={() => setCreating(false)} />
+            <EditProjectModal project={editing} onClose={() => setEditing(null)} />
         </>
     );
 }
