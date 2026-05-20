@@ -20,8 +20,7 @@ class BacklogController extends Controller
         abort_if($project->team_id !== $current_team->id, 404);
 
         $sprints = $project->sprints()
-            ->whereIn('status', ['planned', 'active'])
-            ->orderByRaw("FIELD(status, 'active', 'planned')")
+            ->orderByRaw("FIELD(status, 'active', 'planned', 'completed')")
             ->orderBy('created_at')
             ->get()
             ->map(fn (Sprint $sprint) => [

@@ -18,7 +18,8 @@ interface Props {
 
 export function SprintSection({ projectId, sprint, members, allSprints, canStart = false, selectedIds, onToggleSelect }: Props) {
     const { currentTeam } = usePage().props as { currentTeam: { slug: string } };
-    const [collapsed, setCollapsed] = useState(false);
+    const isCompleted = sprint.status === 'completed';
+    const [collapsed, setCollapsed] = useState(isCompleted);
     const [createOpen, setCreateOpen] = useState(false);
 
     const baseUrl = `/${currentTeam.slug}/projects/${projectId}`;
@@ -55,34 +56,41 @@ export function SprintSection({ projectId, sprint, members, allSprints, canStart
                             Active
                         </span>
                     )}
+                    {isCompleted && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                            Completed
+                        </span>
+                    )}
                     <span className="text-sm text-muted-foreground">
                         {sprint.issues.length} issues
                         {sprint.issues.length > 0 && ` · ${doneCount} done`}
                     </span>
                 </div>
 
-                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button size="sm" variant="ghost" onClick={() => setCreateOpen(true)} className="h-7 text-xs">
-                        + Issue
-                    </Button>
-                    {!isActive && canStart && (
-                        <Button size="sm" variant="outline" onClick={startSprint} className="h-7 gap-1 text-xs">
-                            <Play className="size-3" />
-                            Start Sprint
+                {!isCompleted && (
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Button size="sm" variant="ghost" onClick={() => setCreateOpen(true)} className="h-7 text-xs">
+                            + Issue
                         </Button>
-                    )}
-                    {isActive && (
-                        <Button size="sm" variant="outline" onClick={completeSprint} className="h-7 gap-1 text-xs">
-                            <Square className="size-3" />
-                            Complete Sprint
-                        </Button>
-                    )}
-                    {!isActive && (
-                        <Button size="sm" variant="ghost" onClick={deleteSprint} className="size-7 p-0 text-muted-foreground hover:text-destructive">
-                            <Trash2 className="size-3.5" />
-                        </Button>
-                    )}
-                </div>
+                        {!isActive && canStart && (
+                            <Button size="sm" variant="outline" onClick={startSprint} className="h-7 gap-1 text-xs">
+                                <Play className="size-3" />
+                                Start Sprint
+                            </Button>
+                        )}
+                        {isActive && (
+                            <Button size="sm" variant="outline" onClick={completeSprint} className="h-7 gap-1 text-xs">
+                                <Square className="size-3" />
+                                Complete Sprint
+                            </Button>
+                        )}
+                        {!isActive && (
+                            <Button size="sm" variant="ghost" onClick={deleteSprint} className="size-7 p-0 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="size-3.5" />
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {!collapsed && (
