@@ -70,6 +70,18 @@ export function IssueCard({ issue, projectId, draggable = false, onDragStart, on
                         <span className="text-xs text-muted-foreground">{issue.issue_key}</span>
                         <PriorityIcon priority={issue.priority} className="size-3" />
                         <StatusBadge status={issue.status} />
+                        <div className="ml-auto">
+                            {issue.assignee ? (
+                                <span
+                                    title={issue.assignee.name}
+                                    className="flex size-5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground"
+                                >
+                                    {initials(issue.assignee.name)}
+                                </span>
+                            ) : (
+                                <span className="flex size-5 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30" />
+                            )}
+                        </div>
                     </div>
                 )}
             </Link>
