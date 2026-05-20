@@ -1,7 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Layers, ListTodo, Plus } from 'lucide-react';
+import { Layers, ListTodo, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IssueCard } from '@/components/project/issue-card';
 import { IssueModal } from '@/components/project/issue-modal';
 import { SprintSection } from '@/components/project/sprint-section';
@@ -18,9 +19,34 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
     const { currentTeam } = usePage().props as { currentTeam: { slug: string } };
     const [createOpen, setCreateOpen] = useState(false);
     const [backlogCollapsed, setBacklogCollapsed] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [bulkSprintId, setBulkSprintId] = useState<string>('backlog');
 
     const baseUrl = `/${currentTeam.slug}/projects/${project.id}`;
     const hasActiveSprint = sprints.some(s => s.status === 'active');
+
+    function toggleSelect(id: number) {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    }
+
+    function clearSelection() {
+        setSelectedIds(new Set());
+        setBulkSprintId('backlog');
+    }
+
+    function applyBulkMove() {
+        router.patch(`${baseUrl}/issues/bulk`, {
+            issue_ids: Array.from(selectedIds),
+            sprint_id: bulkSprintId === 'backlog' ? null : Number(bulkSprintId),
+        }, {
+            preserveScroll: true,
+            onSuccess: clearSelection,
+        });
+    }
 
     useEffect(() => {
         localStorage.setItem(`noticket_view_${project.id}`, 'backlog');
@@ -91,6 +117,8 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
                             members={members}
                             allSprints={allSprints}
                             canStart={!hasActiveSprint}
+                            selectedIds={selectedIds}
+                            onToggleSelect={toggleSelect}
                         />
                     ))}
 
@@ -118,8 +146,14 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
                                 ) : (
                                     <div className="divide-y divide-border">
                                         {backlog.map((issue) => (
-                                            <div key={issue.id} className="px-4 py-2">
-                                                <IssueCard issue={issue} projectId={project.id} compact />
+                                            <div key={issue.id} className="px-4 py-1.5">
+                                                <IssueCard
+                                                    issue={issue}
+                                                    projectId={project.id}
+                                                    compact
+                                                    selected={selectedIds.has(issue.id)}
+                                                    onToggleSelect={toggleSelect}
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -128,6 +162,36 @@ export default function Backlog({ project, sprints, backlog, members }: Props) {
                         )}
                     </div>
                 </div>
+
+                {selectedIds.size > 0 && (
+                    <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+                        <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-xl">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                {selectedIds.size} selected
+                            </span>
+                            <div className="h-4 w-px bg-border" />
+                            <Select value={bulkSprintId} onValueChange={setBulkSprintId}>
+                                <SelectTrigger className="h-8 w-44 text-xs">
+                                    <SelectValue placeholder="Move to…" />
+                                </SelectTrigger>
+                                <SelectContent side="top">
+                                    <SelectItem value="backlog">Backlog</SelectItem>
+                                    {allSprints.map(s => (
+                                        <SelectItem key={s.id} value={String(s.id)}>
+                                            {s.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Button size="sm" className="h-8 text-xs" onClick={applyBulkMove}>
+                                Move
+                            </Button>
+                            <button onClick={clearSelection} className="text-muted-foreground hover:text-foreground">
+                                <X className="size-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <IssueModal

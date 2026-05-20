@@ -37,6 +37,7 @@ Route::prefix('{current_team}')
         // Issues
         Route::get('projects/{project}/issues', [IssueController::class, 'index'])->name('issues.index');
         Route::post('projects/{project}/issues', [IssueController::class, 'store'])->name('issues.store');
+        Route::patch('projects/{project}/issues/bulk', [IssueController::class, 'bulkUpdate'])->name('issues.bulk-update');
         Route::get('projects/{project}/issues/{issue}', [IssueController::class, 'show'])->name('issues.show');
         Route::patch('projects/{project}/issues/{issue}', [IssueController::class, 'update'])->name('issues.update');
         Route::delete('projects/{project}/issues/{issue}', [IssueController::class, 'destroy'])->name('issues.destroy');

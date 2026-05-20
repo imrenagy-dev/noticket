@@ -185,6 +185,28 @@ class IssueController extends Controller
         return back();
     }
 
+    public function bulkUpdate(Request $request, Team $current_team, Project $project): RedirectResponse
+    {
+        abort_if($project->team_id !== $current_team->id, 404);
+
+        $validated = $request->validate([
+            'issue_ids'   => ['required', 'array', 'min:1'],
+            'issue_ids.*' => ['integer', 'exists:issues,id'],
+            'sprint_id'   => ['nullable', 'exists:sprints,id'],
+        ]);
+
+        if (isset($validated['sprint_id'])) {
+            $sprint = Sprint::find($validated['sprint_id']);
+            abort_if($sprint?->project_id !== $project->id, 422);
+        }
+
+        $project->issues()
+            ->whereIn('id', $validated['issue_ids'])
+            ->update(['sprint_id' => $validated['sprint_id']]);
+
+        return back();
+    }
+
     public function destroy(Request $request, Team $current_team, Project $project, Issue $issue): RedirectResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);

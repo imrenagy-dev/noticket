@@ -12,9 +12,11 @@ interface Props {
     members: IssueUser[];
     allSprints: Pick<Sprint, 'id' | 'name' | 'status'>[];
     canStart?: boolean;
+    selectedIds?: Set<number>;
+    onToggleSelect?: (id: number) => void;
 }
 
-export function SprintSection({ projectId, sprint, members, allSprints, canStart = false }: Props) {
+export function SprintSection({ projectId, sprint, members, allSprints, canStart = false, selectedIds, onToggleSelect }: Props) {
     const { currentTeam } = usePage().props as { currentTeam: { slug: string } };
     const [collapsed, setCollapsed] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
@@ -93,8 +95,14 @@ export function SprintSection({ projectId, sprint, members, allSprints, canStart
                     ) : (
                         <div className="divide-y divide-border">
                             {sprint.issues.map((issue) => (
-                                <div key={issue.id} className="px-4 py-2">
-                                    <IssueCard issue={issue} projectId={projectId} compact />
+                                <div key={issue.id} className="px-4 py-1.5">
+                                    <IssueCard
+                                        issue={issue}
+                                        projectId={projectId}
+                                        compact
+                                        selected={selectedIds?.has(issue.id)}
+                                        onToggleSelect={onToggleSelect}
+                                    />
                                 </div>
                             ))}
                         </div>
