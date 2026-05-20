@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import type { Issue } from '@/types';
 import { IssueTypeIcon } from './issue-type-icon';
 import { PriorityIcon } from './priority-icon';
+import { StatusBadge } from './status-badge';
 
 interface Props {
     issue: Issue;
@@ -68,6 +69,7 @@ export function IssueCard({ issue, projectId, draggable = false, onDragStart, on
                         <IssueTypeIcon type={issue.type} className="size-3.5" />
                         <span className="text-xs text-muted-foreground">{issue.issue_key}</span>
                         <PriorityIcon priority={issue.priority} className="size-3" />
+                        <StatusBadge status={issue.status} />
                     </div>
                 )}
             </Link>
