@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Projects;
 
 use App\Http\Controllers\Controller;
-use App\Contracts\ProjectPresenterContract;
+use App\Http\Presenters\ProjectPresenterInterface;
+use App\Repositories\IssueRepositoryInterface;
+use App\Repositories\SprintRepositoryInterface;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Sprint;
@@ -13,32 +15,25 @@ use Inertia\Response;
 
 class BacklogController extends Controller
 {
-    public function __construct(private ProjectPresenterContract $presenter) {}
+    public function __construct(
+        private ProjectPresenterInterface $presenter,
+        private IssueRepositoryInterface  $issueRepo,
+        private SprintRepositoryInterface $sprintRepo,
+    ) {}
 
     public function show(Team $current_team, Project $project): Response
     {
         abort_if($project->team_id !== $current_team->id, 404);
 
-        $sprints = $project->sprints()
-            ->orderByRaw("FIELD(status, 'active', 'planned', 'completed')")
-            ->orderBy('created_at')
-            ->get()
+        $sprints = $this->sprintRepo->forProject($project)
             ->map(fn (Sprint $sprint) => [
                 ...$this->presenter->sprint($sprint),
-                'issues' => $project->issues()
-                    ->where('sprint_id', $sprint->id)
-                    ->with(['reporter:id,name', 'assignee:id,name'])
-                    ->orderBy('backlog_order')
-                    ->get()
+                'issues' => $this->issueRepo->forSprint($sprint)
                     ->map(fn (Issue $issue) => $this->presenter->issue($issue, $project->key))
                     ->toArray(),
             ]);
 
-        $backlog = $project->issues()
-            ->whereNull('sprint_id')
-            ->with(['reporter:id,name', 'assignee:id,name'])
-            ->orderBy('backlog_order')
-            ->get()
+        $backlog = $this->issueRepo->forBacklog($project)
             ->map(fn (Issue $issue) => $this->presenter->issue($issue, $project->key));
 
         return Inertia::render('projects/backlog', [

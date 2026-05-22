@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Models\Project;
 use App\Models\Team;
+use App\Services\ProjectService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,32 +14,27 @@ use Inertia\Response;
 
 class ProjectController extends Controller
 {
+    public function __construct(private ProjectService $projectService) {}
+
     public function index(Team $current_team): Response
     {
-        $projects = $current_team->projects()
-            ->withCount('issues')
-            ->orderBy('name')
-            ->get()
-            ->map(fn (Project $p) => [
+        $projects = $this->projectService->listForTeam($current_team);
+
+        return Inertia::render('projects/index', [
+            'projects' => $projects->map(fn (Project $p) => [
                 'id'          => $p->id,
                 'name'        => $p->name,
                 'key'         => $p->key,
                 'description' => $p->description,
                 'issue_count' => $p->issues_count,
                 'created_at'  => $p->created_at->toISOString(),
-            ]);
-
-        return Inertia::render('projects/index', [
-            'projects' => $projects,
+            ]),
         ]);
     }
 
     public function store(StoreProjectRequest $request, Team $current_team): RedirectResponse
     {
-        $project = $current_team->projects()->create([
-            ...$request->validated(),
-            'created_by' => $request->user()->id,
-        ]);
+        $project = $this->projectService->create($current_team, $request->validated(), $request->user()->id);
 
         return to_route('projects.board', [
             'current_team' => $current_team->slug,
@@ -55,7 +51,7 @@ class ProjectController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $project->update($validated);
+        $this->projectService->update($project, $validated);
 
         return back();
     }
@@ -64,7 +60,7 @@ class ProjectController extends Controller
     {
         abort_if($project->team_id !== $current_team->id, 404);
 
-        $project->delete();
+        $this->projectService->delete($project);
 
         return to_route('projects.index', ['current_team' => $current_team->slug]);
     }

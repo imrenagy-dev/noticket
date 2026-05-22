@@ -7,12 +7,12 @@ use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
-use App\Models\Issue;
 use App\Models\IssueHistory;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Team;
-use App\Contracts\IssueHistoryContract;
+use App\Http\Presenters\ProjectPresenterInterface;
+use App\Services\IssueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,31 +22,26 @@ use Inertia\Response;
 
 class IssueController extends Controller
 {
-    public function __construct(private IssueHistoryContract $history) {}
+    public function __construct(
+        private IssueService               $issueService,
+        private ProjectPresenterInterface  $presenter,
+    ) {}
 
     public function index(Request $request, Team $current_team, Project $project): JsonResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);
 
-        $q = (string) $request->query('q', '');
+        $issues = $this->issueService->search(
+            $project,
+            (string) $request->query('q', ''),
+        );
 
-        $issues = $project->issues()
-            ->select('id', 'number', 'title', 'checklist')
-            ->when($q, fn ($query) => $query->where(function ($sub) use ($q) {
-                $sub->where('title', 'like', "%{$q}%")
-                    ->orWhere('number', 'like', "%{$q}%");
-            }))
-            ->orderBy('number', 'desc')
-            ->limit(30)
-            ->get()
-            ->map(fn ($issue) => [
-                'id'        => $issue->id,
-                'issue_key' => $project->key . '-' . $issue->number,
-                'title'     => $issue->title,
-                'checklist' => $issue->checklist ?? [],
-            ]);
-
-        return response()->json($issues);
+        return response()->json($issues->map(fn ($issue) => [
+            'id'        => $issue->id,
+            'issue_key' => $project->key . '-' . $issue->number,
+            'title'     => $issue->title,
+            'checklist' => $issue->checklist ?? [],
+        ]));
     }
 
     public function store(Request $request, Team $current_team, Project $project): RedirectResponse
@@ -73,17 +68,12 @@ class IssueController extends Controller
             abort_if($sprint?->project_id !== $project->id, 422);
         }
 
-        $issue = $project->issues()->create([
-            ...$validated,
-            'reporter_id' => $request->user()->id,
-        ]);
-
-        $this->history->recordCreated($issue, $request->user()->id);
+        $this->issueService->create($project, $validated, $request->user()->id);
 
         return back();
     }
 
-    public function show(Team $current_team, Project $project, Issue $issue): Response
+    public function show(Team $current_team, Project $project, \App\Models\Issue $issue): Response
     {
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
@@ -97,12 +87,8 @@ class IssueController extends Controller
         ]);
 
         return Inertia::render('projects/issue', [
-            'project' => [
-                'id'   => $project->id,
-                'name' => $project->name,
-                'key'  => $project->key,
-            ],
-            'issue' => [
+            'project' => $this->presenter->project($project),
+            'issue'   => [
                 'id'           => $issue->id,
                 'number'       => $issue->number,
                 'issue_key'    => $project->key . '-' . $issue->number,
@@ -142,10 +128,7 @@ class IssueController extends Controller
                 'created_at' => $issue->created_at->toISOString(),
                 'updated_at' => $issue->updated_at->toISOString(),
             ],
-            'members' => $current_team->members()
-                ->select('users.id', 'users.name')
-                ->get()
-                ->map(fn ($m) => ['id' => $m->id, 'name' => $m->name]),
+            'members' => $this->presenter->members($current_team),
             'sprints' => $project->sprints()
                 ->whereIn('status', ['planned', 'active'])
                 ->get(['id', 'name', 'status'])
@@ -153,7 +136,7 @@ class IssueController extends Controller
         ]);
     }
 
-    public function update(Request $request, Team $current_team, Project $project, Issue $issue): RedirectResponse
+    public function update(Request $request, Team $current_team, Project $project, \App\Models\Issue $issue): RedirectResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
@@ -178,9 +161,7 @@ class IssueController extends Controller
             abort_if($sprint?->project_id !== $project->id, 422);
         }
 
-        $entries = $this->history->computeUpdateEntries($issue, $validated);
-        $issue->update($validated);
-        $this->history->persistUpdateEntries($issue, $entries, $request->user()->id);
+        $this->issueService->update($issue, $validated, $request->user()->id);
 
         return back();
     }
@@ -195,26 +176,23 @@ class IssueController extends Controller
             'sprint_id'   => ['nullable', 'exists:sprints,id'],
         ]);
 
-        if (isset($validated['sprint_id'])) {
-            $sprint = Sprint::find($validated['sprint_id']);
-            abort_if($sprint?->project_id !== $project->id, 422);
-        }
-
-        $project->issues()
-            ->whereIn('id', $validated['issue_ids'])
-            ->update(['sprint_id' => $validated['sprint_id']]);
+        $this->issueService->bulkUpdateSprint(
+            $project,
+            $validated['issue_ids'],
+            $validated['sprint_id'],
+        );
 
         return back();
     }
 
-    public function destroy(Request $request, Team $current_team, Project $project, Issue $issue): RedirectResponse
+    public function destroy(Request $request, Team $current_team, Project $project, \App\Models\Issue $issue): RedirectResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
 
-        $this->history->recordDeleted($issue, $request->user()->id);
-        $issue->delete();
+        $this->issueService->delete($issue, $request->user()->id);
 
         return back();
     }
+
 }

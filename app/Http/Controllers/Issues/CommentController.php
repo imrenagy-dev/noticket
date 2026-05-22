@@ -7,11 +7,14 @@ use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Team;
+use App\Services\CommentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
+    public function __construct(private CommentService $commentService) {}
+
     public function store(Request $request, Team $current_team, Project $project, Issue $issue): RedirectResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);
@@ -21,10 +24,7 @@ class CommentController extends Controller
             'content' => ['required', 'string', 'max:5000'],
         ]);
 
-        $issue->comments()->create([
-            'content' => $validated['content'],
-            'user_id' => $request->user()->id,
-        ]);
+        $this->commentService->create($issue, $validated['content'], $request->user()->id);
 
         return back();
     }
@@ -34,13 +34,12 @@ class CommentController extends Controller
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
         abort_if($comment->issue_id !== $issue->id, 404);
-        abort_if($comment->user_id !== $request->user()->id, 403);
 
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:5000'],
         ]);
 
-        $comment->update($validated);
+        $this->commentService->update($comment, $validated['content'], $request->user()->id);
 
         return back();
     }
@@ -50,9 +49,8 @@ class CommentController extends Controller
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
         abort_if($comment->issue_id !== $issue->id, 404);
-        abort_if($comment->user_id !== $request->user()->id, 403);
 
-        $comment->delete();
+        $this->commentService->delete($comment, $request->user()->id);
 
         return back();
     }

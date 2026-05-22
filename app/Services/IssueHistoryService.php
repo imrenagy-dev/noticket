@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Contracts\IssueHistoryContract;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
@@ -10,7 +9,7 @@ use App\Models\Issue;
 use App\Models\Sprint;
 use App\Models\User;
 
-class IssueHistoryService implements IssueHistoryContract
+class IssueHistoryService implements IssueHistoryInterface
 {
     public function recordCreated(Issue $issue, int $userId): void
     {

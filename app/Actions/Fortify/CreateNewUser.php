@@ -3,7 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Actions\Teams\CreateTeam;
-use App\Contracts\CaptchaContract;
+use App\Services\CaptchaInterface;
 use App\Models\User;
 use App\Support\PasswordRules;
 use App\Support\ProfileRules;
@@ -16,7 +16,7 @@ class CreateNewUser implements CreatesNewUsers
 {
     public function __construct(
         private CreateTeam $createTeam,
-        private CaptchaContract $captcha,
+        private CaptchaInterface $captcha,
     ) {}
 
     /**

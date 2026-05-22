@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Contracts;
+namespace App\Support;
 
-interface TeamSlugGeneratorContract
+interface TeamSlugGeneratorInterface
 {
     public function generate(string $name, ?int $excludeId = null): string;
 }

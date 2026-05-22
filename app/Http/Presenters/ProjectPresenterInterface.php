@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Contracts;
+namespace App\Http\Presenters;
 
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Team;
 
-interface ProjectPresenterContract
+interface ProjectPresenterInterface
 {
     public function project(Project $project): array;
 

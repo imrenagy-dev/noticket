@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Contracts;
+namespace App\Services;
 
 use App\Models\Issue;
 
-interface IssueHistoryContract
+interface IssueHistoryInterface
 {
     public function recordCreated(Issue $issue, int $userId): void;
 

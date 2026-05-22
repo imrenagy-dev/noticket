@@ -2,11 +2,10 @@
 
 namespace App\Support;
 
-use App\Contracts\TeamSlugGeneratorContract;
 use App\Models\Team;
 use Illuminate\Support\Str;
 
-class TeamSlugGenerator implements TeamSlugGeneratorContract
+class TeamSlugGenerator implements TeamSlugGeneratorInterface
 {
     public function generate(string $name, ?int $excludeId = null): string
     {

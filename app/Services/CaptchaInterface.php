@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Contracts;
+namespace App\Services;
 
-interface CaptchaContract
+interface CaptchaInterface
 {
     public function generate(int $length = 6): string;
 

@@ -2,12 +2,12 @@
 
 namespace App\Observers;
 
-use App\Contracts\TeamSlugGeneratorContract;
+use App\Support\TeamSlugGeneratorInterface;
 use App\Models\Team;
 
 class TeamObserver
 {
-    public function __construct(private TeamSlugGeneratorContract $slugGenerator) {}
+    public function __construct(private TeamSlugGeneratorInterface $slugGenerator) {}
 
     public function creating(Team $team): void
     {
