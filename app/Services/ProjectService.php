@@ -2,28 +2,30 @@
 
 namespace App\Services;
 
+use App\Data\ProjectDTO;
 use App\Repositories\ProjectRepositoryInterface;
 use App\Models\Project;
 use App\Models\Team;
 use Illuminate\Support\Collection;
 
-class ProjectService
+class ProjectService implements ProjectServiceInterface
 {
     public function __construct(private ProjectRepositoryInterface $projects) {}
 
     public function listForTeam(Team $team): Collection
     {
-        return $this->projects->forTeam($team);
+        return $this->projects->forTeam($team)
+            ->map(fn (Project $p) => ProjectDTO::fromModel($p));
     }
 
-    public function create(Team $team, array $data, int $creatorId): Project
+    public function create(Team $team, array $data, int $creatorId): ProjectDTO
     {
-        return $this->projects->create($team, $data, $creatorId);
+        return ProjectDTO::fromModel($this->projects->create($team, $data, $creatorId));
     }
 
-    public function update(Project $project, array $data): Project
+    public function update(Project $project, array $data): ProjectDTO
     {
-        return $this->projects->update($project, $data);
+        return ProjectDTO::fromModel($this->projects->update($project, $data));
     }
 
     public function delete(Project $project): void

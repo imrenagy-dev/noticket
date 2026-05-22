@@ -8,7 +8,7 @@ use App\Enums\IssueType;
 use App\Models\Issue;
 use Carbon\CarbonImmutable;
 
-readonly class IssueData
+readonly class IssueDTO
 {
     public function __construct(
         public int             $id,
@@ -22,12 +22,14 @@ readonly class IssueData
         public ?int            $storyPoints,
         public array           $checklist,
         public ?int            $sprintId,
-        public ?MemberData     $reporter,
-        public ?MemberData     $assignee,
+        public ?MemberDTO      $reporter,
+        public ?MemberDTO      $assignee,
         public int             $boardOrder,
         public int             $backlogOrder,
         public CarbonImmutable $createdAt,
         public CarbonImmutable $updatedAt,
+        public ?SprintDTO      $sprint = null,
+        public ?ProjectDTO     $project = null,
     ) {}
 
     public static function fromModel(Issue $issue, string $projectKey): self
@@ -44,12 +46,18 @@ readonly class IssueData
             storyPoints:  $issue->story_points,
             checklist:    $issue->checklist ?? [],
             sprintId:     $issue->sprint_id,
-            reporter:     $issue->reporter ? MemberData::fromModel($issue->reporter) : null,
-            assignee:     $issue->assignee ? MemberData::fromModel($issue->assignee) : null,
+            reporter:     $issue->reporter ? MemberDTO::fromModel($issue->reporter) : null,
+            assignee:     $issue->assignee ? MemberDTO::fromModel($issue->assignee) : null,
             boardOrder:   $issue->board_order,
             backlogOrder: $issue->backlog_order,
             createdAt:    CarbonImmutable::instance($issue->created_at),
             updatedAt:    CarbonImmutable::instance($issue->updated_at),
+            sprint:       $issue->relationLoaded('sprint') && $issue->sprint
+                            ? SprintDTO::fromModel($issue->sprint)
+                            : null,
+            project:      $issue->relationLoaded('project') && $issue->project
+                            ? ProjectDTO::fromModel($issue->project)
+                            : null,
         );
     }
 }

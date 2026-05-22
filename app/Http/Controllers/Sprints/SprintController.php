@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Sprint;
 use App\Models\Team;
-use App\Services\SprintService;
+use App\Services\SprintServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class SprintController extends Controller
 {
-    public function __construct(private SprintService $sprintService) {}
+    public function __construct(private SprintServiceInterface $sprintService) {}
 
     public function store(Request $request, Team $current_team, Project $project): RedirectResponse
     {

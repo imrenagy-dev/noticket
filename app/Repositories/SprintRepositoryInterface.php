@@ -21,4 +21,8 @@ interface SprintRepositoryInterface
     public function update(Sprint $sprint, array $data): Sprint;
 
     public function delete(Sprint $sprint): void;
+
+    public function findById(int $id): ?Sprint;
+
+    public function findNameById(int $id): ?string;
 }

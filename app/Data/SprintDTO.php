@@ -6,13 +6,13 @@ use App\Enums\SprintStatus;
 use App\Models\Sprint;
 use Carbon\CarbonImmutable;
 
-readonly class SprintData
+readonly class SprintDTO
 {
     public function __construct(
-        public int             $id,
-        public string          $name,
-        public ?string         $goal,
-        public SprintStatus    $status,
+        public int              $id,
+        public string           $name,
+        public ?string          $goal,
+        public SprintStatus     $status,
         public ?CarbonImmutable $startsAt,
         public ?CarbonImmutable $endsAt,
     ) {}

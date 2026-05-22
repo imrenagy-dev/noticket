@@ -80,4 +80,32 @@ class IssueRepository implements IssueRepositoryInterface
             ->whereIn('id', $issueIds)
             ->update(['sprint_id' => $sprintId]);
     }
+
+    public function moveIncompleteToBacklog(Sprint $sprint): void
+    {
+        $sprint->project->issues()
+            ->where('sprint_id', $sprint->id)
+            ->where('status', '!=', 'done')
+            ->update(['sprint_id' => null]);
+    }
+
+    public function moveAllToBacklog(Sprint $sprint): void
+    {
+        $sprint->project->issues()
+            ->where('sprint_id', $sprint->id)
+            ->update(['sprint_id' => null]);
+    }
+
+    public function loadDetail(Issue $issue): Issue
+    {
+        $issue->load([
+            'reporter:id,name',
+            'assignee:id,name',
+            'sprint:id,name,status',
+            'comments.user:id,name',
+            'histories.user:id,name',
+        ]);
+
+        return $issue;
+    }
 }

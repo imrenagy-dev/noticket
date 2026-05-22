@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-interface CaptchaInterface
+interface CaptchaServiceInterface
 {
     public function generate(int $length = 6): string;
 

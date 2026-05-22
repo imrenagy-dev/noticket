@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers\Issues;
 
+use App\Data\CommentDTO;
+use App\Data\IssueHistoryDTO;
+use App\Data\IssueSearchDTO;
+use App\Data\SprintDTO;
 use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Http\Controllers\Controller;
-use App\Models\Comment;
-use App\Models\IssueHistory;
-use App\Models\Project;
-use App\Models\Sprint;
-use App\Models\Team;
 use App\Http\Presenters\ProjectPresenterInterface;
-use App\Services\IssueService;
+use App\Models\Issue;
+use App\Models\Project;
+use App\Models\Team;
+use App\Services\IssueServiceInterface;
+use App\Services\SprintServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,24 +26,22 @@ use Inertia\Response;
 class IssueController extends Controller
 {
     public function __construct(
-        private IssueService               $issueService,
-        private ProjectPresenterInterface  $presenter,
+        private IssueServiceInterface     $issueService,
+        private SprintServiceInterface    $sprintService,
+        private ProjectPresenterInterface $presenter,
     ) {}
 
     public function index(Request $request, Team $current_team, Project $project): JsonResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);
 
-        $issues = $this->issueService->search(
-            $project,
-            (string) $request->query('q', ''),
-        );
+        $issues = $this->issueService->search($project, (string) $request->query('q', ''));
 
-        return response()->json($issues->map(fn ($issue) => [
-            'id'        => $issue->id,
-            'issue_key' => $project->key . '-' . $issue->number,
-            'title'     => $issue->title,
-            'checklist' => $issue->checklist ?? [],
+        return response()->json($issues->map(fn (IssueSearchDTO $i) => [
+            'id'        => $i->id,
+            'issue_key' => $i->issueKey,
+            'title'     => $i->title,
+            'checklist' => $i->checklist,
         ]));
     }
 
@@ -63,80 +64,65 @@ class IssueController extends Controller
             'story_points'     => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        if (isset($validated['sprint_id'])) {
-            $sprint = Sprint::find($validated['sprint_id']);
-            abort_if($sprint?->project_id !== $project->id, 422);
-        }
-
         $this->issueService->create($project, $validated, $request->user()->id);
 
         return back();
     }
 
-    public function show(Team $current_team, Project $project, \App\Models\Issue $issue): Response
+    public function show(Team $current_team, Project $project, Issue $issue): Response
     {
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
 
-        $issue->load([
-            'reporter:id,name',
-            'assignee:id,name',
-            'sprint:id,name,status',
-            'comments.user:id,name',
-            'histories.user:id,name',
-        ]);
+        $detail  = $this->issueService->loadDetail($issue, $project->key);
+        $sprints = $this->sprintService->getPlannedAndActive($project);
 
         return Inertia::render('projects/issue', [
             'project' => $this->presenter->project($project),
             'issue'   => [
-                'id'           => $issue->id,
-                'number'       => $issue->number,
-                'issue_key'    => $project->key . '-' . $issue->number,
-                'title'        => $issue->title,
-                'description'  => $issue->description,
-                'checklist'    => $issue->checklist ?? [],
-                'type'         => $issue->type,
-                'status'       => $issue->status,
-                'priority'     => $issue->priority,
-                'story_points' => $issue->story_points,
-                'sprint_id'    => $issue->sprint_id,
-                'sprint'       => $issue->sprint
-                    ? ['id' => $issue->sprint->id, 'name' => $issue->sprint->name, 'status' => $issue->sprint->status]
-                    : null,
-                'reporter' => $issue->reporter
-                    ? ['id' => $issue->reporter->id, 'name' => $issue->reporter->name]
-                    : null,
-                'assignee' => $issue->assignee
-                    ? ['id' => $issue->assignee->id, 'name' => $issue->assignee->name]
-                    : null,
-                'comments' => $issue->comments->map(fn (Comment $c) => [
+                'id'           => $detail->issue->id,
+                'number'       => $detail->issue->number,
+                'issue_key'    => $detail->issue->issueKey,
+                'title'        => $detail->issue->title,
+                'description'  => $detail->issue->description,
+                'checklist'    => $detail->issue->checklist,
+                'type'         => $detail->issue->type->value,
+                'status'       => $detail->issue->status->value,
+                'priority'     => $detail->issue->priority->value,
+                'story_points' => $detail->issue->storyPoints,
+                'sprint_id'    => $detail->issue->sprintId,
+                'sprint'       => $detail->issue->sprint ? [
+                    'id'     => $detail->issue->sprint->id,
+                    'name'   => $detail->issue->sprint->name,
+                    'status' => $detail->issue->sprint->status->value,
+                ] : null,
+                'reporter'  => $detail->issue->reporter  ? ['id' => $detail->issue->reporter->id,  'name' => $detail->issue->reporter->name]  : null,
+                'assignee'  => $detail->issue->assignee  ? ['id' => $detail->issue->assignee->id,  'name' => $detail->issue->assignee->name]  : null,
+                'comments'  => array_map(fn (CommentDTO $c) => [
                     'id'         => $c->id,
                     'content'    => $c->content,
                     'user'       => ['id' => $c->user->id, 'name' => $c->user->name],
-                    'created_at' => $c->created_at->toISOString(),
-                    'updated_at' => $c->updated_at->toISOString(),
-                ]),
-                'histories' => $issue->histories->map(fn (IssueHistory $h) => [
+                    'created_at' => $c->createdAt->toISOString(),
+                    'updated_at' => $c->updatedAt->toISOString(),
+                ], $detail->comments),
+                'histories' => array_map(fn (IssueHistoryDTO $h) => [
                     'id'         => $h->id,
                     'user'       => ['id' => $h->user->id, 'name' => $h->user->name],
                     'action'     => $h->action,
                     'field'      => $h->field,
-                    'old_value'  => $h->old_value,
-                    'new_value'  => $h->new_value,
-                    'created_at' => $h->created_at->toISOString(),
-                ]),
-                'created_at' => $issue->created_at->toISOString(),
-                'updated_at' => $issue->updated_at->toISOString(),
+                    'old_value'  => $h->oldValue,
+                    'new_value'  => $h->newValue,
+                    'created_at' => $h->createdAt->toISOString(),
+                ], $detail->histories),
+                'created_at' => $detail->issue->createdAt->toISOString(),
+                'updated_at' => $detail->issue->updatedAt->toISOString(),
             ],
             'members' => $this->presenter->members($current_team),
-            'sprints' => $project->sprints()
-                ->whereIn('status', ['planned', 'active'])
-                ->get(['id', 'name', 'status'])
-                ->map(fn (Sprint $s) => ['id' => $s->id, 'name' => $s->name, 'status' => $s->status]),
+            'sprints' => $sprints->map(fn (SprintDTO $s) => ['id' => $s->id, 'name' => $s->name, 'status' => $s->status->value])->values(),
         ]);
     }
 
-    public function update(Request $request, Team $current_team, Project $project, \App\Models\Issue $issue): RedirectResponse
+    public function update(Request $request, Team $current_team, Project $project, Issue $issue): RedirectResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
@@ -156,12 +142,7 @@ class IssueController extends Controller
             'story_points'     => ['sometimes', 'nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        if (array_key_exists('sprint_id', $validated) && $validated['sprint_id'] !== null) {
-            $sprint = Sprint::find($validated['sprint_id']);
-            abort_if($sprint?->project_id !== $project->id, 422);
-        }
-
-        $this->issueService->update($issue, $validated, $request->user()->id);
+        $this->issueService->update($issue, $project, $validated, $request->user()->id);
 
         return back();
     }
@@ -179,13 +160,13 @@ class IssueController extends Controller
         $this->issueService->bulkUpdateSprint(
             $project,
             $validated['issue_ids'],
-            $validated['sprint_id'],
+            $validated['sprint_id'] ?? null,
         );
 
         return back();
     }
 
-    public function destroy(Request $request, Team $current_team, Project $project, \App\Models\Issue $issue): RedirectResponse
+    public function destroy(Request $request, Team $current_team, Project $project, Issue $issue): RedirectResponse
     {
         abort_if($project->team_id !== $current_team->id, 404);
         abort_if($issue->project_id !== $project->id, 404);
@@ -194,5 +175,4 @@ class IssueController extends Controller
 
         return back();
     }
-
 }

@@ -7,13 +7,13 @@ use App\Models\Comment;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Team;
-use App\Services\CommentService;
+use App\Services\CommentServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    public function __construct(private CommentService $commentService) {}
+    public function __construct(private CommentServiceInterface $commentService) {}
 
     public function store(Request $request, Team $current_team, Project $project, Issue $issue): RedirectResponse
     {

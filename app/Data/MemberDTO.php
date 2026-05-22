@@ -4,7 +4,7 @@ namespace App\Data;
 
 use App\Models\User;
 
-readonly class MemberData
+readonly class MemberDTO
 {
     public function __construct(
         public int    $id,

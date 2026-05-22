@@ -52,4 +52,14 @@ class SprintRepository implements SprintRepositoryInterface
     {
         $sprint->delete();
     }
+
+    public function findById(int $id): ?Sprint
+    {
+        return Sprint::find($id);
+    }
+
+    public function findNameById(int $id): ?string
+    {
+        return Sprint::find($id)?->name;
+    }
 }

@@ -6,14 +6,21 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueStatus;
 use App\Enums\IssueType;
 use App\Models\Issue;
-use App\Models\Sprint;
-use App\Models\User;
+use App\Repositories\IssueHistoryRepositoryInterface;
+use App\Repositories\SprintRepositoryInterface;
+use App\Repositories\UserRepositoryInterface;
 
-class IssueHistoryService implements IssueHistoryInterface
+class IssueHistoryService implements IssueHistoryServiceInterface
 {
+    public function __construct(
+        private IssueHistoryRepositoryInterface $historyRepo,
+        private UserRepositoryInterface         $users,
+        private SprintRepositoryInterface       $sprints,
+    ) {}
+
     public function recordCreated(Issue $issue, int $userId): void
     {
-        $issue->histories()->create([
+        $this->historyRepo->record($issue, [
             'user_id'   => $userId,
             'action'    => 'created',
             'field'     => null,
@@ -24,7 +31,7 @@ class IssueHistoryService implements IssueHistoryInterface
 
     public function recordDeleted(Issue $issue, int $userId): void
     {
-        $issue->histories()->create([
+        $this->historyRepo->record($issue, [
             'user_id'   => $userId,
             'action'    => 'deleted',
             'field'     => null,
@@ -33,10 +40,6 @@ class IssueHistoryService implements IssueHistoryInterface
         ]);
     }
 
-    /**
-     * Compute diff entries from original values — call BEFORE $issue->update().
-     * Then pass the result to persistUpdateEntries() AFTER the update.
-     */
     public function computeUpdateEntries(Issue $issue, array $validated): array
     {
         $entries = [];
@@ -53,9 +56,9 @@ class IssueHistoryService implements IssueHistoryInterface
                 'type'     => $this->enumEntry($field, $oldRaw, $newValue, IssueType::class),
                 'priority' => $this->enumEntry($field, $oldRaw, $newValue, IssuePriority::class),
                 'assignee_id' => $this->resolvedEntry('assignee', $oldRaw, $newValue,
-                    fn ($id) => User::find($id)?->name),
+                    fn ($id) => $this->users->findNameById((int) $id)),
                 'sprint_id' => $this->resolvedEntry('sprint', $oldRaw, $newValue,
-                    fn ($id) => Sprint::find($id)?->name),
+                    fn ($id) => $this->sprints->findNameById((int) $id)),
                 'title', 'story_points' => (string) $oldRaw !== (string) $newValue
                     ? ['action' => 'updated', 'field' => $field,
                         'old_value' => $oldRaw !== null ? (string) $oldRaw : null,
@@ -75,7 +78,7 @@ class IssueHistoryService implements IssueHistoryInterface
     public function persistUpdateEntries(Issue $issue, array $entries, int $userId): void
     {
         foreach ($entries as $entry) {
-            $issue->histories()->create(['user_id' => $userId, ...$entry]);
+            $this->historyRepo->record($issue, ['user_id' => $userId, ...$entry]);
         }
     }
 

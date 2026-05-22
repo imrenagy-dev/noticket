@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Issue;
 
-interface IssueHistoryInterface
+interface IssueHistoryServiceInterface
 {
     public function recordCreated(Issue $issue, int $userId): void;
 

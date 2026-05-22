@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Projects;
 
+use App\Data\ProjectDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Projects\StoreProjectRequest;
 use App\Models\Project;
 use App\Models\Team;
-use App\Services\ProjectService;
+use App\Services\ProjectServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,20 +15,20 @@ use Inertia\Response;
 
 class ProjectController extends Controller
 {
-    public function __construct(private ProjectService $projectService) {}
+    public function __construct(private ProjectServiceInterface $projectService) {}
 
     public function index(Team $current_team): Response
     {
         $projects = $this->projectService->listForTeam($current_team);
 
         return Inertia::render('projects/index', [
-            'projects' => $projects->map(fn (Project $p) => [
+            'projects' => $projects->map(fn (ProjectDTO $p) => [
                 'id'          => $p->id,
                 'name'        => $p->name,
                 'key'         => $p->key,
                 'description' => $p->description,
-                'issue_count' => $p->issues_count,
-                'created_at'  => $p->created_at->toISOString(),
+                'issue_count' => $p->issuesCount,
+                'created_at'  => $p->createdAt?->toISOString(),
             ]),
         ]);
     }

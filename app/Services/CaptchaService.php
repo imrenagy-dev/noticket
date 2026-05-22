@@ -4,7 +4,7 @@ namespace App\Services;
 
 use Illuminate\Contracts\Session\Session;
 
-class CaptchaService implements CaptchaInterface
+class CaptchaService implements CaptchaServiceInterface
 {
     private const SESSION_KEY = 'captcha_answer';
     private const CHARS       = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
