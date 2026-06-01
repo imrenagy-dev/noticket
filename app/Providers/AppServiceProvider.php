@@ -8,6 +8,7 @@ use App\Repositories\CommentRepository;
 use App\Repositories\CommentRepositoryInterface;
 use App\Repositories\DashboardRepository;
 use App\Repositories\DashboardRepositoryInterface;
+use App\Repositories\IssueBoardRepositoryInterface;
 use App\Repositories\IssueHistoryRepository;
 use App\Repositories\IssueHistoryRepositoryInterface;
 use App\Repositories\IssueRepository;
@@ -20,6 +21,10 @@ use App\Repositories\UserRepository;
 use App\Repositories\UserRepositoryInterface;
 use App\Services\CaptchaServiceInterface;
 use App\Services\CaptchaService;
+use App\Support\CaptchaImageGenerator;
+use App\Support\CaptchaImageGeneratorInterface;
+use App\Support\ChecklistDiffer;
+use App\Support\ChecklistDifferInterface;
 use App\Services\CommentService;
 use App\Services\CommentServiceInterface;
 use App\Services\DashboardService;
@@ -45,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CaptchaServiceInterface::class, CaptchaService::class);
+        $this->app->bind(CaptchaImageGeneratorInterface::class, CaptchaImageGenerator::class);
+        $this->app->bind(ChecklistDifferInterface::class, ChecklistDiffer::class);
         $this->app->bind(IssueHistoryServiceInterface::class, IssueHistoryService::class);
         $this->app->bind(IssueServiceInterface::class, IssueService::class);
         $this->app->bind(SprintServiceInterface::class, SprintService::class);
@@ -55,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TeamSlugGeneratorInterface::class, TeamSlugGenerator::class);
 
         $this->app->bind(IssueRepositoryInterface::class, IssueRepository::class);
+        $this->app->bind(IssueBoardRepositoryInterface::class, IssueRepository::class);
         $this->app->bind(SprintRepositoryInterface::class, SprintRepository::class);
         $this->app->bind(ProjectRepositoryInterface::class, ProjectRepository::class);
         $this->app->bind(CommentRepositoryInterface::class, CommentRepository::class);

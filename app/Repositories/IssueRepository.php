@@ -8,7 +8,7 @@ use App\Models\Project;
 use App\Models\Sprint;
 use Illuminate\Support\Collection;
 
-class IssueRepository implements IssueRepositoryInterface
+class IssueRepository implements IssueRepositoryInterface, IssueBoardRepositoryInterface
 {
     public function search(Project $project, string $query, int $limit = 30): Collection
     {

@@ -15,9 +15,6 @@ interface IssueRepositoryInterface
 
     public function forSprint(Sprint $sprint): Collection;
 
-    /** Returns issues for the sprint grouped by status key. */
-    public function boardColumns(Sprint $sprint): array;
-
     public function create(Project $project, array $data): Issue;
 
     public function update(Issue $issue, array $data): Issue;

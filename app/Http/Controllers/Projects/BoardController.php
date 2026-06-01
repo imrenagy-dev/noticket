@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Projects;
 
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\ProjectPresenterInterface;
-use App\Repositories\IssueRepositoryInterface;
+use App\Repositories\IssueBoardRepositoryInterface;
 use App\Repositories\SprintRepositoryInterface;
 use App\Models\Issue;
 use App\Models\Project;
@@ -16,9 +16,9 @@ use Inertia\Response;
 class BoardController extends Controller
 {
     public function __construct(
-        private ProjectPresenterInterface $presenter,
-        private IssueRepositoryInterface  $issueRepo,
-        private SprintRepositoryInterface $sprintRepo,
+        private ProjectPresenterInterface   $presenter,
+        private IssueBoardRepositoryInterface $issueRepo,
+        private SprintRepositoryInterface   $sprintRepo,
     ) {}
 
     public function show(Team $current_team, Project $project): Response

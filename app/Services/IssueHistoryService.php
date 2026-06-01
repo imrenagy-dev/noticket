@@ -9,6 +9,7 @@ use App\Models\Issue;
 use App\Repositories\IssueHistoryRepositoryInterface;
 use App\Repositories\SprintRepositoryInterface;
 use App\Repositories\UserRepositoryInterface;
+use App\Support\ChecklistDifferInterface;
 
 class IssueHistoryService implements IssueHistoryServiceInterface
 {
@@ -16,6 +17,7 @@ class IssueHistoryService implements IssueHistoryServiceInterface
         private IssueHistoryRepositoryInterface $historyRepo,
         private UserRepositoryInterface         $users,
         private SprintRepositoryInterface       $sprints,
+        private ChecklistDifferInterface        $checklistDiffer,
     ) {}
 
     public function recordCreated(Issue $issue, int $userId): void
@@ -48,7 +50,7 @@ class IssueHistoryService implements IssueHistoryServiceInterface
             $oldRaw = $issue->getRawOriginal($field);
 
             $entry = match ($field) {
-                'checklist'   => $this->checklistEntry($oldRaw, $newValue),
+                'checklist'   => $this->checklistDiffer->entry($oldRaw, $newValue),
                 'description' => $oldRaw !== $newValue
                     ? ['action' => 'updated', 'field' => 'description', 'old_value' => null, 'new_value' => null]
                     : null,
@@ -84,21 +86,6 @@ class IssueHistoryService implements IssueHistoryServiceInterface
 
     // --- private helpers ---
 
-    private function checklistEntry(?string $oldRaw, mixed $newValue): ?array
-    {
-        $old = $oldRaw ? json_decode($oldRaw, true) : [];
-        $new = $newValue ?? [];
-
-        if (json_encode($old) === json_encode($new)) {
-            return null;
-        }
-
-        [$oldDisplay, $newDisplay] = $this->checklistDiff($old, $new);
-
-        return ['action' => 'updated', 'field' => 'checklist',
-            'old_value' => $oldDisplay, 'new_value' => $newDisplay];
-    }
-
     /** @param class-string<\BackedEnum> $enumClass */
     private function enumEntry(string $field, mixed $oldRaw, mixed $newValue, string $enumClass): ?array
     {
@@ -124,55 +111,4 @@ class IssueHistoryService implements IssueHistoryServiceInterface
         ];
     }
 
-    private function checklistDiff(array $old, array $new): array
-    {
-        $oldById = array_column($old, null, 'id');
-        $newById = array_column($new, null, 'id');
-        $changes = [];
-
-        foreach ($new as $item) {
-            if (! isset($oldById[$item['id']])) {
-                $changes[] = ['type' => 'added', 'text' => $item['text']];
-            }
-        }
-        foreach ($old as $item) {
-            if (! isset($newById[$item['id']])) {
-                $changes[] = ['type' => 'removed', 'text' => $item['text']];
-            }
-        }
-        foreach ($new as $item) {
-            if (isset($oldById[$item['id']])) {
-                $o = $oldById[$item['id']];
-                if ($o['done'] !== $item['done']) {
-                    $changes[] = ['type' => $item['done'] ? 'checked' : 'unchecked', 'text' => $item['text']];
-                } elseif ($o['text'] !== $item['text']) {
-                    $changes[] = ['type' => 'renamed', 'old_text' => $o['text'], 'new_text' => $item['text']];
-                }
-            }
-        }
-
-        if (count($changes) === 1) {
-            $c = $changes[0];
-            return match ($c['type']) {
-                'added'     => [null, $c['text']],
-                'removed'   => [$c['text'], null],
-                'checked'   => ['☐ ' . $c['text'], '☑ ' . $c['text']],
-                'unchecked' => ['☑ ' . $c['text'], '☐ ' . $c['text']],
-                'renamed'   => [$c['old_text'], $c['new_text']],
-                default     => [$this->checklistSummary($old), $this->checklistSummary($new)],
-            };
-        }
-
-        return [$this->checklistSummary($old), $this->checklistSummary($new)];
-    }
-
-    private function checklistSummary(array $items): string
-    {
-        if (empty($items)) {
-            return 'empty';
-        }
-        $done  = count(array_filter($items, fn ($i) => $i['done']));
-        $total = count($items);
-        return $total . ' item' . ($total !== 1 ? 's' : '') . ' (' . $done . ' done)';
-    }
 }
