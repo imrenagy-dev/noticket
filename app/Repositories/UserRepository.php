@@ -6,8 +6,10 @@ use App\Models\User;
 
 class UserRepository implements UserRepositoryInterface
 {
+    public function __construct(private readonly User $model) {}
+
     public function findNameById(int $id): ?string
     {
-        return User::find($id)?->name;
+        return $this->model->find($id)?->name;
     }
 }

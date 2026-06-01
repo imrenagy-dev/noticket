@@ -9,6 +9,8 @@ use Illuminate\Support\Collection;
 
 class SprintRepository implements SprintRepositoryInterface
 {
+    public function __construct(private readonly Sprint $model) {}
+
     public function forProject(Project $project): Collection
     {
         return $project->sprints()
@@ -55,11 +57,11 @@ class SprintRepository implements SprintRepositoryInterface
 
     public function findById(int $id): ?Sprint
     {
-        return Sprint::find($id);
+        return $this->model->find($id);
     }
 
     public function findNameById(int $id): ?string
     {
-        return Sprint::find($id)?->name;
+        return $this->model->find($id)?->name;
     }
 }

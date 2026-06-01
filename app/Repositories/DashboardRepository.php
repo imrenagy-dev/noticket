@@ -9,6 +9,11 @@ use Illuminate\Support\Collection;
 
 class DashboardRepository implements DashboardRepositoryInterface
 {
+    public function __construct(
+        private readonly Issue $issue,
+        private readonly Sprint $sprint,
+    ) {}
+
     public function getStats(Team $team, int $userId): array
     {
         $projectIds = $team->projects()->pluck('id');
@@ -19,9 +24,9 @@ class DashboardRepository implements DashboardRepositoryInterface
 
         return [
             'projects'       => $projectIds->count(),
-            'open_issues'    => Issue::whereIn('project_id', $projectIds)->where('status', '!=', 'done')->count(),
-            'my_issues'      => Issue::whereIn('project_id', $projectIds)->where('assignee_id', $userId)->where('status', '!=', 'done')->count(),
-            'active_sprints' => Sprint::whereIn('project_id', $projectIds)->where('status', 'active')->count(),
+            'open_issues'    => $this->issue->newQuery()->whereIn('project_id', $projectIds, 'and', false)->where('status', '!=', 'done')->count(),
+            'my_issues'      => $this->issue->newQuery()->whereIn('project_id', $projectIds, 'and', false)->where('assignee_id', $userId)->where('status', '!=', 'done')->count(),
+            'active_sprints' => $this->sprint->newQuery()->whereIn('project_id', $projectIds, 'and', false)->where('status', 'active')->count(),
         ];
     }
 
@@ -33,7 +38,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             return collect();
         }
 
-        return Issue::whereIn('project_id', $projectIds)
+        return $this->issue->newQuery()->whereIn('project_id', $projectIds, 'and', false)
             ->where('assignee_id', $userId)
             ->where('status', '!=', 'done')
             ->with(['project:id,name,key'])
@@ -50,7 +55,7 @@ class DashboardRepository implements DashboardRepositoryInterface
             return collect();
         }
 
-        return Issue::whereIn('project_id', $projectIds)
+        return $this->issue->newQuery()->whereIn('project_id', $projectIds, 'and', false)
             ->with(['project:id,name,key', 'assignee:id,name'])
             ->latest('updated_at')
             ->limit($limit)
