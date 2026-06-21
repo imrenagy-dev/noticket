@@ -48,8 +48,8 @@ readonly class IssueDTO
             sprintId:     $issue->sprint_id,
             reporter:     $issue->reporter ? MemberDTO::fromModel($issue->reporter) : null,
             assignee:     $issue->assignee ? MemberDTO::fromModel($issue->assignee) : null,
-            boardOrder:   $issue->board_order,
-            backlogOrder: $issue->backlog_order,
+            boardOrder:   $issue->board_order ?? 0,
+            backlogOrder: $issue->backlog_order ?? 0,
             createdAt:    CarbonImmutable::instance($issue->created_at),
             updatedAt:    CarbonImmutable::instance($issue->updated_at),
             sprint:       $issue->relationLoaded('sprint') && $issue->sprint
